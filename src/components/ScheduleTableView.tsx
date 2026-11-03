@@ -442,11 +442,16 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                             {d}
                           </td>
                           {teachingPeriods.map((p) => {
-                            const booking = filteredBookings.find(
-                              (b) =>
-                                b.day === d &&
-                                b.facility === fac.id &&
-                                isJpOverlap(p.id, p.id, b.startJp, b.endJp)
+                            const cellBookings = filteredBookings.filter(
+                              (b) => {
+                                if (b.facility !== fac.id) return false;
+                                if (!isJpOverlap(p.id, p.id, b.startJp, b.endJp)) return false;
+
+                                if (b.bookingDate) {
+                                  return b.bookingDate.startsWith(currentMonthStr) && b.day === d;
+                                }
+                                return b.day === d;
+                              }
                             );
 
                             return (
@@ -454,27 +459,34 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                                 key={p.id}
                                 className="py-2 px-1 border-r border-slate-200 align-top text-center h-20 min-w-[95px]"
                               >
-                                {booking ? (
-                                  <button
-                                    onClick={() => onEditBooking(booking)}
-                                    className={`w-full h-full p-2 rounded-lg text-left transition-all shadow-2xs flex flex-col justify-between cursor-pointer ${
-                                      isLab1Pid
-                                        ? 'bg-indigo-100/90 text-indigo-950 hover:bg-indigo-200/90 border border-indigo-200'
-                                        : 'bg-emerald-100/90 text-emerald-950 hover:bg-emerald-200/90 border border-emerald-200'
-                                    }`}
-                                  >
-                                    <div>
-                                      <div className="font-extrabold text-[12px] leading-tight">
-                                        {booking.className}
-                                      </div>
-                                      <div className="font-semibold text-[11px] truncate leading-tight mt-0.5" title={booking.teacherName}>
-                                        {booking.teacherName}
-                                      </div>
-                                    </div>
-                                    <div className="text-[10px] opacity-75 truncate mt-1">
-                                      {booking.subject}
-                                    </div>
-                                  </button>
+                                {cellBookings.length > 0 ? (
+                                  <div className="space-y-1">
+                                    {cellBookings.map((booking) => (
+                                      <button
+                                        key={booking.id}
+                                        onClick={() => onEditBooking(booking)}
+                                        className={`w-full p-1.5 rounded text-left transition-all shadow-2xs flex flex-col justify-between cursor-pointer ${
+                                          isLab1Pid
+                                            ? 'bg-indigo-100/95 text-indigo-950 hover:bg-indigo-200 border border-indigo-200'
+                                            : 'bg-emerald-100/95 text-emerald-950 hover:bg-emerald-200 border border-emerald-200'
+                                        }`}
+                                      >
+                                        <div>
+                                          <div className="font-extrabold text-[11px] leading-tight flex items-center justify-between">
+                                            <span>{booking.className}</span>
+                                            {booking.bookingDate && (
+                                              <span className="text-[9px] font-mono opacity-80">
+                                                {booking.bookingDate.slice(8, 10)}/{booking.bookingDate.slice(5, 7)}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className="font-semibold text-[10px] truncate leading-tight mt-0.5" title={booking.teacherName}>
+                                            {booking.teacherName}
+                                          </div>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
                                 ) : (
                                   <button
                                     onClick={() => onOpenBookingModal(fac.id, d)}
