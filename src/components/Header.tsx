@@ -139,15 +139,15 @@ export const Header: React.FC<HeaderProps> = ({
             )}
 
             <button
-              onClick={() => setActiveTab('pid-info')}
+              onClick={() => setActiveTab('facilities')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 lg:px-3 lg:py-2 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
-                activeTab === 'pid-info'
+                activeTab === 'facilities'
                   ? 'bg-blue-800 text-amber-300 font-bold border-b-2 border-amber-400 shadow-inner'
                   : 'text-blue-100 hover:text-white hover:bg-blue-800/60'
               }`}
             >
               <Info className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-400" />
-              <span>Info PID</span>
+              <span>Fasilitas</span>
             </button>
           </nav>
 

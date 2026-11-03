@@ -56,6 +56,19 @@
         "createdAt": { "type": "string" }
       },
       "required": ["name", "subject"]
+    },
+    "GalleryImage": {
+      "title": "GalleryImage",
+      "description": "Foto fasilitas laboratorium komputer dan PID SMPN 1 Kawali",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string", "maxLength": 100 },
+        "imageUrl": { "type": "string" },
+        "description": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["imageUrl", "createdAt"]
     }
   },
   "firestore": {
@@ -74,6 +87,10 @@
     "/teachers/{teacherId}": {
       "schema": { "$ref": "#/entities/Teacher" },
       "description": "Koleksi daftar guru pengampu, NIP, dan Mata Pelajaran"
+    },
+    "/gallery/{imageId}": {
+      "schema": { "$ref": "#/entities/GalleryImage" },
+      "description": "Koleksi foto fasilitas sekolah"
     }
   }
 }

@@ -10,8 +10,8 @@ import {
 import { UserSession } from '../types/schedule';
 
 interface BottomNavProps {
-  activeTab: 'dashboard' | 'schedule' | 'bookings' | 'pid-info' | 'admin';
-  setActiveTab: (tab: 'dashboard' | 'schedule' | 'bookings' | 'pid-info' | 'admin') => void;
+  activeTab: 'dashboard' | 'schedule' | 'bookings' | 'facilities' | 'admin';
+  setActiveTab: (tab: 'dashboard' | 'schedule' | 'bookings' | 'facilities' | 'admin') => void;
   onLogout: () => void;
   currentUser?: UserSession | null;
 }
@@ -27,7 +27,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     { id: 'schedule', label: 'Jadwal', icon: Calendar },
     { id: 'bookings', label: 'Pemesanan', icon: BookOpen },
     ...(currentUser?.role === 'admin' ? [{ id: 'admin', label: 'Admin', icon: ShieldCheck }] : []),
-    { id: 'pid-info', label: 'Info PID', icon: Info },
+    { id: 'facilities', label: 'Fasilitas', icon: Info },
   ];
 
   return (

@@ -1,9 +1,8 @@
 import React from 'react';
-import { Plus, ShieldCheck, Clock, Layers } from 'lucide-react';
-import { Booking, DayOfWeek, Facility, Period } from '../types/schedule';
+import { Plus, ShieldCheck, Clock, Layers, BookOpen } from 'lucide-react';
+import { Booking, DayOfWeek, Facility, Period, UserSession } from '../types/schedule';
 import { FACILITIES } from '../data/defaultData';
-import { formatIndonesianDate, getFacilityLiveStatus, getJpTimeRangeLabel, getCurrentPeriod } from '../utils/timeUtils';
-import { PidInfoCard } from './PidInfoCard';
+import { formatIndonesianDate, getFacilityLiveStatus, getJpTimeRangeLabel, getCurrentPeriod, formatDateToIndonesianShort, timeToMinutes, getPeriodById } from '../utils/timeUtils';
 
 interface DashboardViewProps {
   currentDate: Date;
@@ -15,6 +14,7 @@ interface DashboardViewProps {
   onNavigateToAdmin: () => void;
   currentUser?: UserSession | null;
   isFirebaseConnected?: boolean;
+  onEditBooking?: (booking: Booking) => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -27,12 +27,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateToAdmin,
   currentUser,
   isFirebaseConnected = true,
+  onEditBooking,
 }) => {
   const facilityStatuses = FACILITIES.map((fac) =>
     getFacilityLiveStatus(fac.id, effectiveDay, effectiveTimeStr, bookings, periods, currentDate)
   );
 
   const currentPeriod = getCurrentPeriod(effectiveTimeStr, periods);
+
+  const myBookings = currentUser?.role === 'guru'
+    ? bookings.filter((b) => b.teacherName === currentUser.name)
+    : [];
+
+  const todayStr = (() => {
+    const d = currentDate;
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  })();
+
+  const currentTimeMin = timeToMinutes(effectiveTimeStr);
 
   return (
     <div className="space-y-3.5 max-w-7xl mx-auto px-2.5 sm:px-4 lg:px-8 py-2.5 sm:py-4">
@@ -92,6 +107,99 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* PESANAN LABKOM SAYA (KHUSUS AKUN GURU) */}
+      {currentUser?.role === 'guru' && (
+        <div className="bg-white rounded-xl border border-blue-200 p-3.5 sm:p-4 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 bg-blue-900 text-amber-400 rounded-lg">
+                <BookOpen className="w-4 h-4" />
+              </span>
+              <div>
+                <h3 className="font-extrabold text-blue-950 text-sm sm:text-base">
+                  Pesanan Labkom Saya
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Daftar jadwal laboratorium yang Anda pesan ({currentUser.name})
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => onOpenBookingModal()}
+              className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-lg text-xs font-black shadow-2xs transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span>Pesan Baru</span>
+            </button>
+          </div>
+
+          {myBookings.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {myBookings.map((b) => {
+                const isLab1Pid = b.facility === 'LABKOM 1 PID';
+                const timeLabel = getJpTimeRangeLabel(b.startJp, b.endJp, periods);
+                
+                // Calculate if booking is ongoing
+                const startP = getPeriodById(periods, b.startJp);
+                const endP = getPeriodById(periods, b.endJp);
+                const isOngoing = b.bookingDate === todayStr && 
+                                 startP && endP &&
+                                 currentTimeMin >= timeToMinutes(startP.startTime) &&
+                                 currentTimeMin < timeToMinutes(endP.endTime);
+
+                return (
+                  <div
+                    key={b.id}
+                    onClick={() => onEditBooking && onEditBooking(b)}
+                    className={`bg-slate-50 hover:bg-blue-50/50 border p-3 rounded-xl transition-all cursor-pointer flex flex-col justify-between space-y-2 shadow-2xs ${
+                      isOngoing 
+                        ? 'border-blue-500 ring-2 ring-blue-100 animate-pulse' 
+                        : 'border-slate-200 hover:border-blue-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`px-2 py-0.5 rounded font-bold text-[10px] ${
+                          isLab1Pid ? 'bg-indigo-100 text-indigo-900' : 'bg-emerald-100 text-emerald-900'
+                        }`}>
+                          {b.facility}
+                        </span>
+                        {isOngoing && (
+                          <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-ping" />
+                        )}
+                      </div>
+                      <span className="text-xs sm:text-sm font-mono font-black text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                        {b.day}{b.bookingDate ? `, ${formatDateToIndonesianShort(b.bookingDate)}` : ''}
+                      </span>
+                    </div>
+
+                    <div>
+                      <div className="font-black text-blue-950 text-sm">
+                        Kelas {b.className}
+                      </div>
+                      <div className="text-xs font-semibold text-slate-700 truncate">
+                        {b.subject}
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] font-mono text-blue-900 font-bold">
+                      <span>{timeLabel}</span>
+                      <span className="text-blue-600 font-sans font-semibold text-[10px]">
+                        {isOngoing ? 'Sedang Berlangsung' : 'Ubah &rarr;'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+              Belum ada pemesanan laboratorium yang Anda buat. Klik tombol <strong>Pesan Baru</strong> untuk membuat jadwal.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* JADWAL SEKARANG (RANGKA PUTIH, DOMINAN BIRU, AKSEN KUNING, MOBIL-EFISIEN) */}
       <section>
@@ -260,9 +368,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           })}
         </div>
       </section>
-
-      {/* PID Information Note (Terintegrasi di LABKOM 1 PID) - Di bawah */}
-      <PidInfoCard compact />
     </div>
   );
 };

@@ -56,4 +56,12 @@ export interface UserSession {
   subject?: string;
 }
 
+export interface GalleryImage {
+  id: string;
+  title?: string;
+  imageUrl: string;
+  description?: string;
+  createdAt: string;
+}
+
 

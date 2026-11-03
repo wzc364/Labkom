@@ -24,7 +24,9 @@ import { DAYS_OF_WEEK, DEFAULT_DAY_SCHEDULES } from '../data/defaultData';
 import { timeToMinutes, minutesToTime } from '../utils/timeUtils';
 import { PrintScheduleModal } from './PrintScheduleModal';
 import { TeacherManagement } from './TeacherManagement';
+import { GalleryManager } from './GalleryManager';
 import { HeaderLogoSettings, HeaderLogoConfig, DEFAULT_LOGO_CONFIG } from './HeaderLogoSettings';
+import { GalleryImage } from '../types/schedule';
 
 interface AdminPanelProps {
   daySchedules: Record<DayOfWeek, DayScheduleConfig>;
@@ -39,6 +41,7 @@ interface AdminPanelProps {
   onDeleteTeacher?: (teacherId: string) => Promise<void>;
   headerLogo?: HeaderLogoConfig | null;
   onSaveHeaderLogo?: (config: HeaderLogoConfig) => Promise<void>;
+  galleryImages?: GalleryImage[];
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -54,8 +57,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onDeleteTeacher,
   headerLogo,
   onSaveHeaderLogo,
+  galleryImages = [],
 }) => {
-  const [adminSubTab, setAdminSubTab] = useState<'schedules' | 'teachers' | 'logo'>('schedules');
+  const [adminSubTab, setAdminSubTab] = useState<'schedules' | 'teachers' | 'logo' | 'gallery'>('schedules');
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>('Senin');
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
@@ -377,6 +381,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <Image className="w-4 h-4 text-amber-400" />
           <span>Logo Header Sekolah</span>
         </button>
+
+        <button
+          onClick={() => setAdminSubTab('gallery')}
+          className={`flex-1 min-w-[180px] py-3 px-5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            adminSubTab === 'gallery'
+              ? 'bg-blue-900 text-amber-300 shadow-md border-2 border-amber-400'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <ImageIcon className="w-4 h-4 text-amber-400" />
+          <span>Galeri Fasilitas</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black">
+            {galleryImages.length}
+          </span>
+        </button>
       </div>
 
       {adminSubTab === 'teachers' ? (
@@ -390,6 +409,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           logoConfig={headerLogo || DEFAULT_LOGO_CONFIG}
           onSaveLogo={onSaveHeaderLogo || (async () => {})}
         />
+      ) : adminSubTab === 'gallery' ? (
+        <GalleryManager images={galleryImages} />
       ) : (
         <>
           {/* Admin Quick Action Cards: Mode TV Display & Cetak Jadwal */}

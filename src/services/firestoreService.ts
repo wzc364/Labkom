@@ -317,6 +317,57 @@ export async function deleteTeacherFromFirestore(teacherId: string): Promise<voi
 
 const SETTINGS_COLLECTION = 'settings';
 const HEADER_LOGO_DOC = 'header_logo';
+const GALLERY_COLLECTION = 'gallery';
+
+// Subscribe to real-time Gallery Images
+export function subscribeGallery(
+  onData: (images: GalleryImage[]) => void,
+  onError?: (err: any) => void
+) {
+  const colRef = collection(db, GALLERY_COLLECTION);
+  return onSnapshot(
+    colRef,
+    (snapshot) => {
+      const items: GalleryImage[] = [];
+      snapshot.forEach((d) => {
+        items.push({ id: d.id, ...d.data() } as GalleryImage);
+      });
+      items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      onData(items);
+    },
+    (err) => {
+      handleFirestoreError(err, OperationType.GET, GALLERY_COLLECTION);
+      if (onError) onError(err);
+    }
+  );
+}
+
+// Save or update gallery image to Firestore
+export async function saveGalleryImageToFirestore(image: GalleryImage): Promise<void> {
+  try {
+    const docRef = doc(db, GALLERY_COLLECTION, image.id);
+    await setDoc(docRef, {
+      title: image.title || '',
+      imageUrl: image.imageUrl,
+      description: image.description || '',
+      createdAt: image.createdAt,
+    });
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, `${GALLERY_COLLECTION}/${image.id}`);
+    throw err;
+  }
+}
+
+// Delete gallery image from Firestore
+export async function deleteGalleryImageFromFirestore(imageId: string): Promise<void> {
+  try {
+    const docRef = doc(db, GALLERY_COLLECTION, imageId);
+    await deleteDoc(docRef);
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, `${GALLERY_COLLECTION}/${imageId}`);
+    throw err;
+  }
+}
 
 // Subscribe to real-time Header Logo Config
 export function subscribeHeaderLogo(

@@ -9,7 +9,7 @@ import { BottomNav } from './components/BottomNav';
 import { DashboardView } from './components/DashboardView';
 import { ScheduleTableView } from './components/ScheduleTableView';
 import { BookingManagement } from './components/BookingManagement';
-import { PidInfoCard } from './components/PidInfoCard';
+import { FacilityGallery } from './components/FacilityGallery';
 import { BookingModal } from './components/BookingModal';
 import { PeriodSettingsModal } from './components/PeriodSettingsModal';
 import { AdminPanel } from './components/AdminPanel';
@@ -17,7 +17,7 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { TvDisplayView } from './components/TvDisplayView';
 import { LoginPage } from './components/LoginPage';
 import { ProfileModal } from './components/ProfileModal';
-import { Booking, DayOfWeek, Facility, Period, DayScheduleConfig, Teacher, UserSession } from './types/schedule';
+import { Booking, DayOfWeek, Facility, Period, DayScheduleConfig, Teacher, UserSession, GalleryImage } from './types/schedule';
 import { loadBookings, saveBookings, loadPeriods, savePeriods, resetToDefaultData } from './utils/storage';
 import { getIndonesianDay, formatTimeDigits } from './utils/timeUtils';
 import { DEFAULT_DAY_SCHEDULES, DEFAULT_TEACHERS } from './data/defaultData';
@@ -68,11 +68,12 @@ function loadInitialDaySchedules(): Record<DayOfWeek, DayScheduleConfig> {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'bookings' | 'pid-info' | 'admin'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'bookings' | 'facilities' | 'admin'>('dashboard');
   const [bookings, setBookings] = useState<Booking[]>(() => loadBookings());
   const [periods, setPeriods] = useState<Period[]>(() => loadPeriods());
   const [daySchedules, setDaySchedules] = useState<Record<DayOfWeek, DayScheduleConfig>>(() => loadInitialDaySchedules());
   const [teachers, setTeachers] = useState<Teacher[]>(DEFAULT_TEACHERS);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(true);
 
   // Header Logo Config State
@@ -148,6 +149,7 @@ export default function App() {
     let unsubscribeDaySchedules: (() => void) | undefined;
     let unsubscribeTeachersRef: (() => void) | undefined;
     let unsubscribeLogoRef: (() => void) | undefined;
+    let unsubscribeGalleryRef: (() => void) | undefined;
 
     async function initFirebase() {
       const connected = await testConnection();
@@ -206,6 +208,16 @@ export default function App() {
         }
       );
 
+      // Subscribe to real-time gallery
+      unsubscribeGalleryRef = subscribeGallery(
+        (remoteImages) => {
+          setGalleryImages(remoteImages || []);
+        },
+        (err) => {
+          console.warn('Failed to fetch gallery:', err);
+        }
+      );
+
       // Subscribe to real-time header logo config
       unsubscribeLogoRef = subscribeHeaderLogo(
         (remoteLogo) => {
@@ -234,6 +246,7 @@ export default function App() {
       if (unsubscribeDaySchedules) unsubscribeDaySchedules();
       if (unsubscribeTeachersRef) unsubscribeTeachersRef();
       if (unsubscribeLogoRef) unsubscribeLogoRef();
+      if (unsubscribeGalleryRef) unsubscribeGalleryRef();
     };
   }, []);
 
@@ -356,7 +369,7 @@ export default function App() {
     }
   };
 
-  const handleTabChange = (tab: 'dashboard' | 'schedule' | 'bookings' | 'pid-info' | 'admin') => {
+  const handleTabChange = (tab: 'dashboard' | 'schedule' | 'bookings' | 'facilities' | 'admin') => {
     if (tab === 'admin') {
       handleNavigateToAdmin();
     } else {
@@ -523,6 +536,7 @@ export default function App() {
             onNavigateToAdmin={handleNavigateToAdmin}
             currentUser={currentUser}
             isFirebaseConnected={isFirebaseConnected}
+            onEditBooking={handleEditBooking}
           />
         )}
 
@@ -540,6 +554,7 @@ export default function App() {
             onDeleteTeacher={handleDeleteTeacher}
             headerLogo={headerLogo}
             onSaveHeaderLogo={handleSaveHeaderLogo}
+            galleryImages={galleryImages}
           />
         )}
 
@@ -569,15 +584,8 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'pid-info' && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-            <PidInfoCard
-              onBookPid={() => {
-                setBookingDefaultFacility('LABKOM 1 PID');
-                setIsBookingModalOpen(true);
-              }}
-            />
-          </div>
+        {activeTab === 'facilities' && (
+          <FacilityGallery images={galleryImages} />
         )}
       </main>
 

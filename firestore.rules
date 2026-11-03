@@ -37,6 +37,11 @@ service cloud.firestore {
       return data.logoType is string && data.logoType.size() <= 50;
     }
 
+    function isValidGalleryImage(data) {
+      return data.imageUrl is string && data.imageUrl.size() <= 2000000 &&
+             data.createdAt is string;
+    }
+
     match /bookings/{bookingId} {
       allow read: if true;
       allow create, update: if isValidId(bookingId) && isValidBooking(request.resource.data);
@@ -59,6 +64,12 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isValidId(teacherId) && isValidTeacher(request.resource.data);
       allow delete: if isValidId(teacherId);
+    }
+
+    match /gallery/{imageId} {
+      allow read: if true;
+      allow create, update: if isValidId(imageId) && isValidGalleryImage(request.resource.data);
+      allow delete: if isValidId(imageId);
     }
 
     match /settings/{settingId} {
