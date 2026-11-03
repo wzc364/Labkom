@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidBooking(data) {
+      return data.teacherName is string && data.teacherName.size() <= 100 &&
+             data.subject is string && data.subject.size() <= 100 &&
+             data.className is string && data.className.size() <= 50 &&
+             data.facility in ['LABKOM 1 PID', 'LABKOM 2', 'LABKOM 1', 'PID'] &&
+             data.day in ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] &&
+             data.startJp is number && data.endJp is number &&
+             data.startJp <= data.endJp;
+    }
+
+    function isValidPeriod(data) {
+      return data.id is number &&
+             data.label is string && data.label.size() <= 50 &&
+             data.startTime is string && data.startTime.size() <= 10 &&
+             data.endTime is string && data.endTime.size() <= 10;
+    }
+
+    function isValidDaySchedule(data) {
+      return data.day in ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] &&
+             data.totalHours is number &&
+             data.periods is list;
+    }
+
+    function isValidTeacher(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.subject is string && data.subject.size() <= 100;
+    }
+
+    function isValidSetting(data) {
+      return data.logoType is string && data.logoType.size() <= 50;
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if true;
+      allow create, update: if isValidId(bookingId) && isValidBooking(request.resource.data);
+      allow delete: if isValidId(bookingId);
+    }
+
+    match /periods/{periodId} {
+      allow read: if true;
+      allow create, update: if isValidId(periodId) && isValidPeriod(request.resource.data);
+      allow delete: if isValidId(periodId);
+    }
+
+    match /day_schedules/{dayId} {
+      allow read: if true;
+      allow create, update: if isValidId(dayId) && isValidDaySchedule(request.resource.data);
+      allow delete: if isValidId(dayId);
+    }
+
+    match /teachers/{teacherId} {
+      allow read: if true;
+      allow create, update: if isValidId(teacherId) && isValidTeacher(request.resource.data);
+      allow delete: if isValidId(teacherId);
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow create, update: if isValidId(settingId) && isValidSetting(request.resource.data);
+      allow delete: if isValidId(settingId);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

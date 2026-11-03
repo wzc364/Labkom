@@ -1,0 +1,6 @@
+{
+  "name": "Jadwal LABKOM & PID SMPN 1 Kawali",
+  "description": "Sistem Informasi & Manajemen Jadwal Penggunaan LABKOM 1, LABKOM 2, dan PID (Interactive Flat Panel) SMPN 1 Kawali dengan deteksi bentrok otomatis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

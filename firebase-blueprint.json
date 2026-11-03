@@ -1,0 +1,80 @@
+{
+  "entities": {
+    "Booking": {
+      "title": "Booking",
+      "description": "Jadwal pemesanan LABKOM 1 PID atau LABKOM 2 SMPN 1 Kawali",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherName": { "type": "string", "maxLength": 100 },
+        "subject": { "type": "string", "maxLength": 100 },
+        "className": { "type": "string", "maxLength": 50 },
+        "facility": { "type": "string", "enum": ["LABKOM 1 PID", "LABKOM 2", "LABKOM 1", "PID"] },
+        "day": { "type": "string", "enum": ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] },
+        "startJp": { "type": "number" },
+        "endJp": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 255 },
+        "createdAt": { "type": "string" },
+        "sharedLabAcknowledgment": { "type": "boolean" }
+      },
+      "required": ["teacherName", "subject", "className", "facility", "day", "startJp", "endJp"]
+    },
+    "Period": {
+      "title": "Period",
+      "description": "Definisi jam pelajaran (JP)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "label": { "type": "string", "maxLength": 50 },
+        "startTime": { "type": "string", "maxLength": 10 },
+        "endTime": { "type": "string", "maxLength": 10 },
+        "isBreak": { "type": "boolean" }
+      },
+      "required": ["id", "label", "startTime", "endTime"]
+    },
+    "DaySchedule": {
+      "title": "DaySchedule",
+      "description": "Konfigurasi jadwal jam pelajaran per hari",
+      "type": "object",
+      "properties": {
+        "day": { "type": "string", "enum": ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] },
+        "totalHours": { "type": "number" },
+        "periods": { "type": "array" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["day", "totalHours", "periods"]
+    },
+    "Teacher": {
+      "title": "Teacher",
+      "description": "Data guru pengampu, NIP, dan Mata Pelajaran SMPN 1 Kawali",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "nip": { "type": "string", "maxLength": 50 },
+        "subject": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "subject"]
+    }
+  },
+  "firestore": {
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "Koleksi data pemesanan jadwal laboratorium komputer dan PID"
+    },
+    "/periods/{periodId}": {
+      "schema": { "$ref": "#/entities/Period" },
+      "description": "Koleksi konfigurasi jam pelajaran umum"
+    },
+    "/day_schedules/{dayId}": {
+      "schema": { "$ref": "#/entities/DaySchedule" },
+      "description": "Koleksi konfigurasi jam pelajaran per hari spesifik"
+    },
+    "/teachers/{teacherId}": {
+      "schema": { "$ref": "#/entities/Teacher" },
+      "description": "Koleksi daftar guru pengampu, NIP, dan Mata Pelajaran"
+    }
+  }
+}
+
