@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Filter, Search, Printer, Plus, ChevronLeft, ChevronRight, LayoutGrid, Layers, CalendarDays } from 'lucide-react';
-import { Booking, DayOfWeek, Facility, Period } from '../types/schedule';
+import { Booking, DayOfWeek, Facility, Period, UserSession } from '../types/schedule';
 import { DAYS_OF_WEEK, FACILITIES } from '../data/defaultData';
 import { getJpTimeRangeLabel, isJpOverlap, formatDateToIndonesianShort, INDONESIAN_MONTHS, getIndonesianDay } from '../utils/timeUtils';
 
@@ -9,6 +9,7 @@ interface ScheduleTableViewProps {
   periods: Period[];
   onOpenBookingModal: (preselectedFacility?: Facility, preselectedDay?: DayOfWeek, preselectedDate?: string) => void;
   onEditBooking: (booking: Booking) => void;
+  currentUser?: UserSession | null;
 }
 
 export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
@@ -16,7 +17,16 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
   periods,
   onOpenBookingModal,
   onEditBooking,
+  currentUser,
 }) => {
+  const handleBookingClick = (b: Booking) => {
+    const isOwner = currentUser?.role === 'admin' || !currentUser || b.teacherName === currentUser.name;
+    if (!isOwner) {
+      alert('Anda hanya dapat melihat atau mengubah jadwal milik Anda sendiri.');
+      return;
+    }
+    onEditBooking(b);
+  };
   const today = new Date();
   const [selectedYear, setSelectedYear] = useState<number>(today.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth()); // 0-indexed (0 = Jan, 10 = Nov)
@@ -357,7 +367,7 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                         return (
                           <button
                             key={b.id}
-                            onClick={() => onEditBooking(b)}
+                            onClick={() => handleBookingClick(b)}
                             className={`w-full text-left px-1 py-0.5 sm:p-1 rounded text-[9px] sm:text-[10px] leading-tight font-black border transition-all cursor-pointer truncate ${
                               isLab1Pid
                                 ? 'bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700'
@@ -464,7 +474,7 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                                     {cellBookings.map((booking) => (
                                       <button
                                         key={booking.id}
-                                        onClick={() => onEditBooking(booking)}
+                                        onClick={() => handleBookingClick(booking)}
                                         className={`w-full p-1.5 rounded text-left transition-all shadow-2xs flex flex-col justify-between cursor-pointer ${
                                           isLab1Pid
                                             ? 'bg-indigo-100/95 text-indigo-950 hover:bg-indigo-200 border border-indigo-200'
@@ -522,7 +532,7 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
             return (
               <div
                 key={b.id}
-                onClick={() => onEditBooking(b)}
+                onClick={() => handleBookingClick(b)}
                 className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-2">

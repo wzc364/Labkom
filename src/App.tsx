@@ -549,6 +549,7 @@ export default function App() {
             periods={currentDayPeriods}
             onOpenBookingModal={handleOpenBookingModal}
             onEditBooking={handleEditBooking}
+            currentUser={currentUser}
           />
         )}
 
