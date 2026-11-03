@@ -20,6 +20,7 @@ export function normalizeBooking(b: any): Booking {
   return {
     ...b,
     facility: normalizeFacility(b.facility),
+    bookingDate: b.bookingDate || new Date().toISOString().slice(0, 10),
   };
 }
 
@@ -80,22 +81,20 @@ export function checkBookingConflict(
   excludeBookingId?: string
 ): ConflictCheckResult {
   const facility = normalizeFacility(newBooking.facility);
-  const { day, startJp, endJp } = newBooking;
+  const { startJp, endJp, bookingDate } = newBooking;
 
   // Filter out the booking itself if editing
   const otherBookings = existingBookings
     .filter((b) => !excludeBookingId || b.id !== excludeBookingId)
     .map(normalizeBooking);
 
-  // Exact facility collision on the same specific date or day
+  // Exact facility collision on the same specific date
   const exactConflicts = otherBookings.filter((b) => {
     if (b.facility !== facility) return false;
 
-    if (newBooking.bookingDate && b.bookingDate) {
-      if (newBooking.bookingDate !== b.bookingDate) return false;
-    } else {
-      if (b.day !== day) return false;
-    }
+    const dateA = bookingDate || '';
+    const dateB = b.bookingDate || '';
+    if (!dateA || !dateB || dateA !== dateB) return false;
 
     return isJpOverlap(startJp, endJp, b.startJp, b.endJp);
   });

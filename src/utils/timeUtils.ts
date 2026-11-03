@@ -120,13 +120,13 @@ export function getFacilityLiveStatus(
     currentDateStr = `${yyyy}-${mm}-${dd}`;
   }
 
-  // Filter bookings for this facility on this specific date (single-instance date)
+  // Filter bookings for this facility on this specific date only
   const dayFacilityBookings = bookings.filter((b) => {
     if (b.facility !== facility) return false;
     if (b.bookingDate && currentDateStr) {
       return b.bookingDate === currentDateStr;
     }
-    return b.day === day;
+    return false;
   });
 
   let currentBooking: Booking | null = null;

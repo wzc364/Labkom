@@ -153,9 +153,6 @@ export default function App() {
       const connected = await testConnection();
       setIsFirebaseConnected(connected);
 
-      // Clear any dummy bookings from Firestore and local state
-      await clearAllFirestoreBookings().catch(() => {});
-
       // Subscribe to real-time updates for bookings
       unsubscribeBookings = subscribeBookings(
         (remoteBookings) => {

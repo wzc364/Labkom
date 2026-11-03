@@ -309,12 +309,12 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                 today.getMonth() === selectedMonth &&
                 today.getDate() === dayNum;
 
-              // Find bookings for this specific date or day name
+              // Find bookings for this specific date only
               const dayBookings = filteredBookings.filter((b) => {
                 if (b.bookingDate) {
                   return b.bookingDate === dateStr;
                 }
-                return b.day === dayName && !isSunday;
+                return false;
               });
 
               return (
