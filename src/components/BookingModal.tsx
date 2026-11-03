@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, AlertTriangle, CheckCircle, Calendar, Clock, User, BookOpen, Layers, Info } from 'lucide-react';
-import { Booking, DayOfWeek, Facility, Period, Teacher } from '../types/schedule';
+import { Booking, DayOfWeek, Facility, Period, Teacher, UserSession } from '../types/schedule';
 import { checkBookingConflict } from '../utils/storage';
 import { DAYS_OF_WEEK, SAMPLE_CLASSES, SAMPLE_SUBJECTS } from '../data/defaultData';
 import { getJpTimeRangeLabel, getIndonesianDayFromDateString } from '../utils/timeUtils';
@@ -15,6 +15,7 @@ interface BookingModalProps {
   editingBooking?: Booking | null;
   defaultFacility?: Facility;
   teachers?: Teacher[];
+  currentUser?: UserSession | null;
 }
 
 
@@ -27,6 +28,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   daySchedules,
   editingBooking,
   defaultFacility = 'LABKOM 1 PID',
+  currentUser,
 }) => {
   const [teacherName, setTeacherName] = useState('');
   const [subject, setSubject] = useState('Informatika');
@@ -60,13 +62,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   useEffect(() => {
     if (editingBooking) {
-      setTeacherName(editingBooking.teacherName);
-      if (SAMPLE_SUBJECTS.includes(editingBooking.subject)) {
-        setSubject(editingBooking.subject);
+      setTeacherName(currentUser?.role === 'guru' && currentUser?.name ? currentUser.name : editingBooking.teacherName);
+      const targetSub = currentUser?.role === 'guru' && currentUser?.subject ? currentUser.subject : editingBooking.subject;
+      if (SAMPLE_SUBJECTS.includes(targetSub)) {
+        setSubject(targetSub);
         setCustomSubject('');
       } else {
         setSubject('CUSTOM');
-        setCustomSubject(editingBooking.subject);
+        setCustomSubject(targetSub);
       }
       if (SAMPLE_CLASSES.includes(editingBooking.className)) {
         setClassName(editingBooking.className);
@@ -83,9 +86,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       setNotes(editingBooking.notes || '');
       setSharedLabAcknowledged(!!editingBooking.sharedLabAcknowledgment);
     } else {
-      setTeacherName('');
-      setSubject('Informatika');
-      setCustomSubject('');
+      const defaultTeacherName = currentUser?.role === 'guru' && currentUser?.name ? currentUser.name : '';
+      const defaultSub = currentUser?.role === 'guru' && currentUser?.subject ? currentUser.subject : 'Informatika';
+
+      setTeacherName(defaultTeacherName);
+      if (SAMPLE_SUBJECTS.includes(defaultSub)) {
+        setSubject(defaultSub);
+        setCustomSubject('');
+      } else {
+        setSubject('CUSTOM');
+        setCustomSubject(defaultSub);
+      }
       setClassName('IX A');
       setCustomClass('');
       setFacility(defaultFacility);
@@ -97,7 +108,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       setNotes('');
       setSharedLabAcknowledged(false);
     }
-  }, [editingBooking, defaultFacility, isOpen]);
+  }, [editingBooking, defaultFacility, isOpen, currentUser]);
 
   const handleDateChange = (val: string) => {
     setBookingDate(val);
@@ -218,31 +229,47 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           {/* Teacher Name & Subject */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
             <div className="space-y-1">
-              <label className="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
-                <User className="w-3.5 h-3.5 text-blue-600" />
-                <span>Nama Guru / Pengajar *</span>
+              <label className="font-bold text-slate-700 flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1">
+                  <User className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Nama Guru / Pengajar *</span>
+                </div>
+                {currentUser?.role === 'guru' && (
+                  <span className="text-[10px] text-emerald-600 font-bold">Otomatis dari Akun</span>
+                )}
               </label>
               <input
                 type="text"
                 required
+                disabled={currentUser?.role === 'guru'}
                 value={teacherName}
                 onChange={(e) => setTeacherName(e.target.value)}
                 placeholder="Contoh: Ega Nugraha, S.Pd."
-                className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className={`w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${
+                  currentUser?.role === 'guru' ? 'bg-slate-100 text-slate-700 cursor-not-allowed font-semibold' : ''
+                }`}
               />
             </div>
 
             {/* Subject Dropdown Menu */}
             <div className="space-y-1">
-              <label className="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
-                <BookOpen className="w-3.5 h-3.5 text-blue-600" />
-                <span>Mata Pelajaran / Kegiatan *</span>
+              <label className="font-bold text-slate-700 flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1">
+                  <BookOpen className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Mata Pelajaran / Kegiatan *</span>
+                </div>
+                {currentUser?.role === 'guru' && (
+                  <span className="text-[10px] text-emerald-600 font-bold">Otomatis dari Akun</span>
+                )}
               </label>
               <div className="flex gap-1.5">
                 <select
                   value={subject}
+                  disabled={currentUser?.role === 'guru'}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="flex-1 px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium"
+                  className={`flex-1 px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium ${
+                    currentUser?.role === 'guru' ? 'bg-slate-100 text-slate-700 cursor-not-allowed font-semibold' : ''
+                  }`}
                 >
                   <optgroup label="Mata Pelajaran SMP (Fase D)">
                     <option value="Informatika">Informatika</option>

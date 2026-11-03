@@ -338,8 +338,20 @@ export default function App() {
   // Active periods for the current effective day (customized per day, e.g. Senin 8 jam, Jumat 5 jam)
   const currentDayPeriods: Period[] = daySchedules[effectiveDay]?.periods || periods;
 
+  // Ensure teachers cannot stay on admin tab
+  useEffect(() => {
+    if (currentUser?.role !== 'admin' && activeTab === 'admin') {
+      setActiveTab('dashboard');
+    }
+  }, [currentUser, activeTab]);
+
   // Navigate to Admin protected by login check
   const handleNavigateToAdmin = () => {
+    if (currentUser?.role !== 'admin') {
+      alert('Halaman admin hanya dapat diakses oleh Administrator.');
+      setActiveTab('dashboard');
+      return;
+    }
     if (isAdminLoggedIn) {
       setActiveTab('admin');
     } else {
@@ -507,7 +519,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'admin' && (
+        {activeTab === 'admin' && currentUser?.role === 'admin' && (
           <AdminPanel
             daySchedules={daySchedules}
             onSaveDaySchedule={handleSaveDaySchedule}
@@ -608,6 +620,7 @@ export default function App() {
         editingBooking={editingBooking}
         defaultFacility={bookingDefaultFacility}
         teachers={teachers}
+        currentUser={currentUser}
       />
 
       <PeriodSettingsModal
