@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Trash2, Edit2, Plus, Download, Upload, RotateCcw, AlertCircle, FileText, Check } from 'lucide-react';
-import { Booking, DayOfWeek, Facility, Period } from '../types/schedule';
+import { Search, Trash2, Edit2, Plus, Download, Upload, RotateCcw, AlertCircle, FileText, Check, Lock } from 'lucide-react';
+import { Booking, DayOfWeek, Facility, Period, UserSession } from '../types/schedule';
 import { DAYS_OF_WEEK } from '../data/defaultData';
 import { getJpTimeRangeLabel, formatDateToIndonesianShort } from '../utils/timeUtils';
 import { exportDataAsJson, importDataFromJson, resetToDefaultData } from '../utils/storage';
@@ -13,6 +13,7 @@ interface BookingManagementProps {
   onDeleteBooking: (id: string) => void;
   onResetData: () => void;
   onImportSuccess: (bookings: Booking[], periods: Period[]) => void;
+  currentUser?: UserSession | null;
 }
 
 export const BookingManagement: React.FC<BookingManagementProps> = ({
@@ -23,6 +24,7 @@ export const BookingManagement: React.FC<BookingManagementProps> = ({
   onDeleteBooking,
   onResetData,
   onImportSuccess,
+  currentUser,
 }) => {
   const [search, setSearch] = useState('');
   const [filterFacility, setFilterFacility] = useState<Facility | 'SEMUA'>('SEMUA');
@@ -258,43 +260,53 @@ export const BookingManagement: React.FC<BookingManagementProps> = ({
                       </td>
 
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        {deleteConfirmId === b.id ? (
-                          <div className="inline-flex items-center gap-1.5 bg-red-50 p-1 rounded-lg border border-red-200">
-                            <span className="text-[10px] text-red-700 font-bold px-1">Yakin hapus?</span>
-                            <button
-                              onClick={() => {
-                                onDeleteBooking(b.id);
-                                setDeleteConfirmId(null);
-                              }}
-                              className="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold"
-                            >
-                              Ya
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirmId(null)}
-                              className="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-[10px]"
-                            >
-                              Batal
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="inline-flex items-center gap-1">
-                            <button
-                              onClick={() => onEditBooking(b)}
-                              className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                              title="Ubah Pemesanan"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirmId(b.id)}
-                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                              title="Hapus Pemesanan"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        )}
+                        {(() => {
+                          const isOwner = currentUser?.role === 'admin' || !currentUser || b.teacherName === currentUser.name;
+                          if (!isOwner) {
+                            return (
+                              <span className="inline-flex items-center gap-1 text-slate-400 text-[11px] italic" title="Hanya dapat diubah oleh pemilik jadwal">
+                                <Lock className="w-3 h-3" /> Milik Guru Lain
+                              </span>
+                            );
+                          }
+                          return deleteConfirmId === b.id ? (
+                            <div className="inline-flex items-center gap-1.5 bg-red-50 p-1 rounded-lg border border-red-200">
+                              <span className="text-[10px] text-red-700 font-bold px-1">Yakin hapus?</span>
+                              <button
+                                onClick={() => {
+                                  onDeleteBooking(b.id);
+                                  setDeleteConfirmId(null);
+                                }}
+                                className="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold"
+                              >
+                                Ya
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirmId(null)}
+                                className="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-[10px]"
+                              >
+                                Batal
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="inline-flex items-center gap-1">
+                              <button
+                                onClick={() => onEditBooking(b)}
+                                className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                title="Ubah Pemesanan"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirmId(b.id)}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                title="Hapus Pemesanan"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          );
+                        })()}
                       </td>
                     </tr>
                   );

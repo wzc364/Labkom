@@ -415,6 +415,12 @@ export default function App() {
 
   // Delete booking (synced with Firestore)
   const handleDeleteBooking = async (id: string) => {
+    const bookingToDelete = bookings.find((b) => b.id === id);
+    if (currentUser?.role === 'guru' && bookingToDelete && bookingToDelete.teacherName !== currentUser.name) {
+      alert('Anda hanya dapat menghapus jadwal milik Anda sendiri.');
+      return;
+    }
+
     const updated = bookings.filter((b) => b.id !== id);
     setBookings(updated);
     saveBookings(updated);
@@ -453,6 +459,10 @@ export default function App() {
 
   // Edit existing booking
   const handleEditBooking = (booking: Booking) => {
+    if (currentUser?.role === 'guru' && booking.teacherName !== currentUser.name) {
+      alert('Anda hanya dapat mengubah jadwal milik Anda sendiri.');
+      return;
+    }
     setEditingBooking(booking);
     setIsBookingModalOpen(true);
   };
@@ -554,6 +564,7 @@ export default function App() {
               setBookings(newB);
               setPeriods(newP);
             }}
+            currentUser={currentUser}
           />
         )}
 
@@ -576,7 +587,7 @@ export default function App() {
             <span className="font-bold text-slate-800">SMPN 1 Kawali</span> · Laboratorium Komputer 1 PID & Laboratorium Komputer 2
           </div>
           <div className="text-slate-400">
-            Jalan Siliwangi No. 248 Kawali, Ciamis · Sistem Terjadwal
+            IT Nesaka SMPN 1 Kawali
           </div>
         </div>
       </footer>
