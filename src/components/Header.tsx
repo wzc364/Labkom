@@ -77,7 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
                   SMPN 1 KAWALI
                 </span>
                 <span className="text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded font-black bg-amber-400 text-slate-950 shadow-2xs whitespace-nowrap">
-                  LABKOM & PID
+                  E-Labkom
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-blue-200 hidden lg:block">

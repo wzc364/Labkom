@@ -139,7 +139,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <span>LABKOM & PID</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Sistem Login Portal Lab
+              E-LABKOM
             </h1>
             <p className="text-xs text-blue-200 mt-1 max-w-xs mx-auto">
               Silakan login untuk mengakses penjadwalan Laboratorium Komputer & Papan Interaktif Digital.

@@ -390,7 +390,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <ImageIcon className="w-4 h-4 text-amber-400" />
+          <Image className="w-4 h-4 text-amber-400" />
           <span>Galeri Fasilitas</span>
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black">
             {galleryImages.length}

@@ -214,7 +214,7 @@ export const PrintScheduleModal: React.FC<PrintScheduleModalProps> = ({
               SMP NEGERI 1 KAWALI
             </h1>
             <p className="text-[11px] text-slate-600 print:text-black mt-0.5">
-              Jalan Siliwangi No. 248 Kawali, Kabupaten Ciamis, Jawa Barat 46253 · Email: smpn1kawali@gmail.sch.id
+              IT Nesaka SMPN 1 Kawali
             </p>
           </div>
 
@@ -316,7 +316,7 @@ export const PrintScheduleModal: React.FC<PrintScheduleModalProps> = ({
               Total Jadwal Terisi: <strong className="text-slate-900 print:text-black">{filteredBookings.length} Sesi</strong>
             </div>
             <div>
-              Dicetak via Sistem Terpadu LABKOM & PID SMPN 1 Kawali
+              Dicetak via Sistem Terpadu E-Labkom SMPN 1 Kawali
             </div>
           </div>
 
