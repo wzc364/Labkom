@@ -157,6 +157,19 @@ export const FacilityGallery: React.FC<FacilityGalleryProps> = ({ images, curren
         </button>
       </div>
 
+      {/* Facility Specs Info Card */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-xs sm:text-sm text-amber-950 shadow-2xs">
+        <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="font-extrabold text-blue-950">Informasi Fasilitas Multimedia SMPN 1 Kawali:</p>
+          <ul className="list-disc list-inside space-y-0.5 text-slate-700">
+            <li><strong>LABKOM 1 PID:</strong> 35 PC Siswa + 2 Server + Papan Interaktif Digital (IFP 75" 4K)</li>
+            <li><strong>LABKOM 2:</strong> 20 PC Siswa + 8 Chromebook + 25 Tablet Android</li>
+            <li>Seluruh ruangan ber-AC dan terhubung jaringan Internet LAN Gigabyte & Wi-Fi Nesaka</li>
+          </ul>
+        </div>
+      </div>
+
       {/* Gallery Grid */}
       {images.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
@@ -413,18 +426,6 @@ export const FacilityGallery: React.FC<FacilityGalleryProps> = ({ images, curren
         </div>
       )}
 
-      {/* Facility Specs Info Card */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-xs sm:text-sm text-amber-950 shadow-2xs">
-        <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="font-extrabold text-blue-950">Informasi Fasilitas Multimedia SMPN 1 Kawali:</p>
-          <ul className="list-disc list-inside space-y-0.5 text-slate-700">
-            <li><strong>LABKOM 1 PID:</strong> 35 PC Siswa + 2 Server + Papan Interaktif Digital (IFP 75" 4K)</li>
-            <li><strong>LABKOM 2:</strong> 20 PC Siswa + 8 Chromebook + 25 Tablet Android</li>
-            <li>Seluruh ruangan ber-AC dan terhubung jaringan Internet LAN Gigabyte & Wi-Fi Nesaka</li>
-          </ul>
-        </div>
-      </div>
     </div>
   );
 };
