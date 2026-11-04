@@ -16,8 +16,8 @@ import { UserSession } from '../types/schedule';
 import { HeaderLogoConfig, PRESET_ICONS } from './HeaderLogoSettings';
 
 interface HeaderProps {
-  activeTab: 'dashboard' | 'schedule' | 'bookings' | 'pid-info' | 'admin';
-  setActiveTab: (tab: 'dashboard' | 'schedule' | 'bookings' | 'pid-info' | 'admin') => void;
+  activeTab: 'dashboard' | 'schedule' | 'bookings' | 'facilities' | 'admin';
+  setActiveTab: (tab: 'dashboard' | 'schedule' | 'bookings' | 'facilities' | 'admin') => void;
   onOpenBookingModal?: () => void;
   onOpenPeriodSettings?: () => void;
   currentUser?: UserSession | null;

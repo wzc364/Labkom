@@ -21,6 +21,8 @@ export function normalizeBooking(b: any): Booking {
     ...b,
     facility: normalizeFacility(b.facility),
     bookingDate: b.bookingDate || new Date().toISOString().slice(0, 10),
+    startJp: Number(b.startJp),
+    endJp: Number(b.endJp),
   };
 }
 
@@ -81,7 +83,9 @@ export function checkBookingConflict(
   excludeBookingId?: string
 ): ConflictCheckResult {
   const facility = normalizeFacility(newBooking.facility);
-  const { startJp, endJp, bookingDate } = newBooking;
+  const startJp = Number(newBooking.startJp);
+  const endJp = Number(newBooking.endJp);
+  const bookingDate = newBooking.bookingDate;
 
   // Filter out the booking itself if editing
   const otherBookings = existingBookings
@@ -102,7 +106,6 @@ export function checkBookingConflict(
   if (exactConflicts.length > 0) {
     const first = exactConflicts[0];
     const timeLabel = getJpTimeRangeLabel(first.startJp, first.endJp, periods);
-    console.log('Conflict detected:', { newBooking, first });
     return {
       hasConflict: true,
       conflictType: 'EXACT_FACILITY',

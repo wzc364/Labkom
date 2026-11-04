@@ -66,7 +66,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onSaveStudent,
   onDeleteStudent,
 }) => {
-  const [adminSubTab, setAdminSubTab] = useState<'schedules' | 'teachers' | 'logo' | 'gallery'>('schedules');
+  const [adminSubTab, setAdminSubTab] = useState<'schedules' | 'teachers' | 'logo' | 'gallery' | 'students'>('schedules');
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>('Senin');
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 

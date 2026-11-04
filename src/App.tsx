@@ -39,6 +39,7 @@ import {
   saveHeaderLogoToFirestore,
   seedInitialFirestoreData,
   clearAllFirestoreBookings,
+  subscribeGallery,
 } from './services/firestoreService';
 import { HeaderLogoConfig, DEFAULT_LOGO_CONFIG } from './components/HeaderLogoSettings';
 
@@ -215,7 +216,7 @@ export default function App() {
 
       // Subscribe to real-time gallery
       unsubscribeGalleryRef = subscribeGallery(
-        (remoteImages) => {
+        (remoteImages: GalleryImage[]) => {
           setGalleryImages(remoteImages || []);
         },
         (err) => {

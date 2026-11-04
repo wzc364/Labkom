@@ -8,7 +8,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
-import { Booking, Period, DayOfWeek, DayScheduleConfig, Teacher, Student } from '../types/schedule';
+import { Booking, Period, DayOfWeek, DayScheduleConfig, Teacher, Student, GalleryImage } from '../types/schedule';
 import { INITIAL_BOOKINGS, DEFAULT_PERIODS, DEFAULT_DAY_SCHEDULES, DEFAULT_TEACHERS } from '../data/defaultData';
 
 
