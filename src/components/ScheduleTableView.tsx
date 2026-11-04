@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Filter, Search, Printer, Plus, ChevronLeft, ChevronRight, LayoutGrid, Layers, CalendarDays } from 'lucide-react';
-import { Booking, DayOfWeek, Facility, Period, UserSession } from '../types/schedule';
+import { Booking, DayOfWeek, Facility, Period, UserSession, DayScheduleConfig } from '../types/schedule';
 import { DAYS_OF_WEEK, FACILITIES } from '../data/defaultData';
-import { getJpTimeRangeLabel, isJpOverlap, formatDateToIndonesianShort, INDONESIAN_MONTHS, getIndonesianDay } from '../utils/timeUtils';
+import { getJpTimeRangeLabel, isJpOverlap, formatDateToIndonesianShort, INDONESIAN_MONTHS, getIndonesianDay, getJpNumber } from '../utils/timeUtils';
 
 interface ScheduleTableViewProps {
   bookings: Booking[];
   periods: Period[];
+  daySchedules?: Record<DayOfWeek, DayScheduleConfig>;
   onOpenBookingModal: (preselectedFacility?: Facility, preselectedDay?: DayOfWeek, preselectedDate?: string) => void;
   onEditBooking: (booking: Booking) => void;
   currentUser?: UserSession | null;
@@ -15,6 +16,7 @@ interface ScheduleTableViewProps {
 export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
   bookings,
   periods,
+  daySchedules,
   onOpenBookingModal,
   onEditBooking,
   currentUser,
@@ -451,11 +453,12 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                           <td className="py-3 px-3 font-bold text-slate-800 bg-slate-50/70 border-r border-slate-200 whitespace-nowrap">
                             {d}
                           </td>
-                          {teachingPeriods.map((p) => {
+                          {teachingPeriods.map((p, pIdx) => {
+                            const targetJp = getJpNumber(p, pIdx);
                             const cellBookings = filteredBookings.filter(
                               (b) => {
                                 if (b.facility !== fac.id) return false;
-                                if (!isJpOverlap(p.id, p.id, b.startJp, b.endJp)) return false;
+                                if (!isJpOverlap(targetJp, targetJp, b.startJp, b.endJp)) return false;
 
                                 if (b.bookingDate) {
                                   return b.bookingDate.startsWith(currentMonthStr) && b.day === d;

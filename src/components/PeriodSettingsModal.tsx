@@ -60,12 +60,12 @@ export const PeriodSettingsModal: React.FC<PeriodSettingsModalProps> = ({
       { id: 1, label: 'JP 1', startTime: '07:15', endTime: '08:00' },
       { id: 2, label: 'JP 2', startTime: '08:00', endTime: '08:45' },
       { id: 3, label: 'JP 3', startTime: '08:45', endTime: '09:30' },
-      { id: 4, label: 'Istirahat 1', startTime: '09:30', endTime: '09:50', isBreak: true },
-      { id: 5, label: 'JP 4', startTime: '09:50', endTime: '10:35' },
-      { id: 6, label: 'JP 5', startTime: '10:35', endTime: '11:20' },
-      { id: 7, label: 'Istirahat 2 (Dzuhur)', startTime: '11:20', endTime: '12:20', isBreak: true },
-      { id: 8, label: 'JP 6', startTime: '12:20', endTime: '13:05' },
-      { id: 9, label: 'JP 7', startTime: '13:05', endTime: '13:50' },
+      { id: 101, label: 'Istirahat 1', startTime: '09:30', endTime: '09:50', isBreak: true },
+      { id: 4, label: 'JP 4', startTime: '09:50', endTime: '10:35' },
+      { id: 5, label: 'JP 5', startTime: '10:35', endTime: '11:20' },
+      { id: 102, label: 'Istirahat 2 (Dzuhur)', startTime: '11:20', endTime: '12:20', isBreak: true },
+      { id: 6, label: 'JP 6', startTime: '12:20', endTime: '13:05' },
+      { id: 7, label: 'JP 7', startTime: '13:05', endTime: '13:50' },
     ];
     setPeriods(preset45);
     setDurationPresetNotice('Preset 45 Menit diterapkan.');

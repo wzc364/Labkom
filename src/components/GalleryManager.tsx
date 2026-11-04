@@ -32,8 +32,8 @@ export const GalleryManager: React.FC<GalleryManagerProps> = ({ images }) => {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1200;
+        const MAX_WIDTH = 1000;
+        const MAX_HEIGHT = 1000;
 
         if (width > height) {
           if (width > MAX_WIDTH) {

@@ -75,17 +75,59 @@ export function getCurrentPeriod(currentTimeStr: string, periods: Period[]): Per
   return null;
 }
 
-export function getPeriodById(periods: Period[], id: number): Period | undefined {
-  return periods.find((p) => p.id === id);
+export function getJpNumber(p: Period, indexInTeaching?: number): number {
+  if (p.label) {
+    const match = p.label.match(/JP\s*(\d+)/i);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+  }
+  if (p.id === 206) return 6;
+  if (p.id === 103) return 4;
+  if (p.id > 0 && p.id < 50) return p.id;
+  return indexInTeaching !== undefined ? indexInTeaching + 1 : p.id;
+}
+
+export function getPeriodById(periods: Period[], idOrJp: number): Period | undefined {
+  if (!periods || periods.length === 0) return undefined;
+
+  // 1. Exact match on id
+  const exact = periods.find((p) => p.id === idOrJp);
+  if (exact) return exact;
+
+  // 2. Match by JP number from label e.g. "JP 6"
+  const byLabel = periods.find((p) => {
+    if (p.isBreak) return false;
+    const match = p.label.match(/JP\s*(\d+)/i);
+    return match && parseInt(match[1], 10) === idOrJp;
+  });
+  if (byLabel) return byLabel;
+
+  // 3. Handle legacy swapped IDs (206 -> 6, 103 -> 4)
+  if (idOrJp === 206) return getPeriodById(periods, 6);
+  if (idOrJp === 103) return getPeriodById(periods, 4);
+
+  // 4. Fallback to index among non-break periods (1-indexed)
+  const teaching = periods.filter((p) => !p.isBreak);
+  if (idOrJp >= 1 && idOrJp <= teaching.length) {
+    return teaching[idOrJp - 1];
+  }
+
+  return undefined;
 }
 
 export function getJpTimeRangeLabel(startJp: number, endJp: number, periods: Period[]): string {
-  const startPeriod = getPeriodById(periods, startJp);
-  const endPeriod = getPeriodById(periods, endJp);
+  const normStart = startJp === 206 ? 6 : (startJp === 103 ? 4 : startJp);
+  const normEnd = endJp === 206 ? 6 : (endJp === 103 ? 4 : endJp);
+
+  const startPeriod = getPeriodById(periods, normStart);
+  const endPeriod = getPeriodById(periods, normEnd);
   if (!startPeriod || !endPeriod) {
-    return `JP ${startJp}${endJp !== startJp ? ` - JP ${endJp}` : ''}`;
+    return `JP ${normStart}${normEnd !== normStart ? ` - JP ${normEnd}` : ''}`;
   }
-  const label = startJp === endJp ? startPeriod.label : `${startPeriod.label} - ${endPeriod.label}`;
+  const startLabel = startPeriod.label.startsWith('JP') ? startPeriod.label : `JP ${normStart}`;
+  const endLabel = endPeriod.label.startsWith('JP') ? endPeriod.label : `JP ${normEnd}`;
+  const label = normStart === normEnd ? startLabel : `${startLabel} - ${endLabel}`;
   return `${label} (${startPeriod.startTime} - ${endPeriod.endTime})`;
 }
 

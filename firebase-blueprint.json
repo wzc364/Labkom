@@ -69,6 +69,18 @@
         "createdAt": { "type": "string" }
       },
       "required": ["imageUrl", "createdAt"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Data siswa SMPN 1 Kawali (NISN dan Nama)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "nisn": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "nisn"]
     }
   },
   "firestore": {
@@ -87,6 +99,10 @@
     "/teachers/{teacherId}": {
       "schema": { "$ref": "#/entities/Teacher" },
       "description": "Koleksi daftar guru pengampu, NIP, dan Mata Pelajaran"
+    },
+    "/students/{studentId}": {
+      "schema": { "$ref": "#/entities/Student" },
+      "description": "Koleksi data siswa dan NISN"
     },
     "/gallery/{imageId}": {
       "schema": { "$ref": "#/entities/GalleryImage" },

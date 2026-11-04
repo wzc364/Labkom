@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Booking, DayOfWeek, Facility, DayScheduleConfig } from '../types/schedule';
 import { DAYS_OF_WEEK } from '../data/defaultData';
+import { getPeriodById } from '../utils/timeUtils';
 
 interface PrintScheduleModalProps {
   isOpen: boolean;
@@ -73,8 +74,8 @@ export const PrintScheduleModal: React.FC<PrintScheduleModalProps> = ({
     const dayConfig = daySchedules[booking.day];
     if (!dayConfig || !dayConfig.periods) return '';
 
-    const startP = dayConfig.periods.find((p) => p.id === booking.startJp);
-    const endP = dayConfig.periods.find((p) => p.id === booking.endJp);
+    const startP = getPeriodById(dayConfig.periods, booking.startJp);
+    const endP = getPeriodById(dayConfig.periods, booking.endJp);
 
     if (startP && endP) {
       return `${startP.startTime} - ${endP.endTime}`;

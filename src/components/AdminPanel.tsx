@@ -142,13 +142,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
     // Re-index JP labels to keep numbering clean
     let jpCounter = 1;
+    let breakCounter = 101;
     const reindexed = updatedPeriods.map((p) => {
       if (!p.isBreak) {
-        const label = `JP ${jpCounter}`;
-        jpCounter++;
-        return { ...p, id: jpCounter - 1, label };
+        const currentJp = jpCounter++;
+        return { ...p, id: currentJp, label: `JP ${currentJp}` };
       }
-      return p;
+      return { ...p, id: p.id >= 100 ? p.id : breakCounter++ };
     });
 
     setCurrentConfig({
@@ -173,7 +173,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const endTime = minutesToTime(endMin);
 
     const newBreak: Period = {
-      id: currentConfig.periods.length + 1,
+      id: 100 + currentConfig.periods.length + 1,
       label: 'Istirahat',
       startTime,
       endTime,
@@ -195,13 +195,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
     // Reindex
     let jpCounter = 1;
+    let breakCounter = 101;
     const reindexed = updated.map((p) => {
       if (!p.isBreak) {
-        const label = `JP ${jpCounter}`;
-        jpCounter++;
-        return { ...p, id: jpCounter - 1, label };
+        const currentJp = jpCounter++;
+        return { ...p, id: currentJp, label: `JP ${currentJp}` };
       }
-      return p;
+      return { ...p, id: p.id >= 100 ? p.id : breakCounter++ };
     });
 
     setCurrentConfig({
@@ -231,7 +231,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       if (i === 3 && currentConfig.totalHours > 3) {
         const breakEnd = currentMin + 20;
         newPeriods.push({
-          id: i + 100, // break identifier
+          id: 101, // break identifier
           label: 'Istirahat 1',
           startTime: minutesToTime(currentMin),
           endTime: minutesToTime(breakEnd),
@@ -244,7 +244,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       if (i === 6 && currentConfig.totalHours > 6) {
         const breakEnd = currentMin + 45; // 45 mins for Dzuhur
         newPeriods.push({
-          id: i + 200,
+          id: 102, // break identifier
           label: 'Istirahat 2 (Dzuhur)',
           startTime: minutesToTime(currentMin),
           endTime: minutesToTime(breakEnd),
@@ -266,7 +266,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onSaveDaySchedule(currentConfig);
+      let jpCount = 1;
+      let breakCount = 101;
+      const cleanPeriods = currentConfig.periods.map((p) => {
+        if (!p.isBreak) {
+          const match = p.label.match(/JP\s*(\d+)/i);
+          const jpNum = match ? parseInt(match[1], 10) : jpCount++;
+          return { ...p, id: jpNum, label: `JP ${jpNum}` };
+        }
+        return { ...p, id: p.id >= 100 ? p.id : breakCount++ };
+      });
+
+      const configToSave: DayScheduleConfig = {
+        ...currentConfig,
+        periods: cleanPeriods,
+      };
+      await onSaveDaySchedule(configToSave);
+      setCurrentConfig(configToSave);
       setSaveSuccessNotice(`Jadwal hari ${selectedDay} berhasil disimpan ke Server Firebase!`);
       setTimeout(() => setSaveSuccessNotice(null), 4000);
     } catch (err) {

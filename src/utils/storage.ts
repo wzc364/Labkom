@@ -16,13 +16,26 @@ export function normalizeFacility(fac: string): Facility {
   return 'LABKOM 2';
 }
 
+function normalizeJpVal(val: any, defaultVal: number): number {
+  const n = Number(val);
+  if (isNaN(n) || n <= 0) return defaultVal;
+  if (n === 206) return 6;
+  if (n === 103) return 4;
+  return n;
+}
+
 export function normalizeBooking(b: any): Booking {
+  const startJp = normalizeJpVal(b.startJp, 1);
+  let endJp = normalizeJpVal(b.endJp, startJp);
+  if (endJp < startJp) {
+    endJp = startJp;
+  }
   return {
     ...b,
     facility: normalizeFacility(b.facility),
     bookingDate: b.bookingDate || new Date().toISOString().slice(0, 10),
-    startJp: Number(b.startJp),
-    endJp: Number(b.endJp),
+    startJp,
+    endJp,
   };
 }
 
@@ -83,8 +96,8 @@ export function checkBookingConflict(
   excludeBookingId?: string
 ): ConflictCheckResult {
   const facility = normalizeFacility(newBooking.facility);
-  const startJp = Number(newBooking.startJp);
-  const endJp = Number(newBooking.endJp);
+  const startJp = normalizeJpVal(newBooking.startJp, 1);
+  const endJp = Math.max(startJp, normalizeJpVal(newBooking.endJp, startJp));
   const bookingDate = newBooking.bookingDate;
 
   // Filter out the booking itself if editing

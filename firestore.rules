@@ -33,6 +33,11 @@ service cloud.firestore {
              data.subject is string && data.subject.size() <= 100;
     }
 
+    function isValidStudent(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.nisn is string && data.nisn.size() <= 50;
+    }
+
     function isValidSetting(data) {
       return data.logoType is string && data.logoType.size() <= 50;
     }
@@ -66,8 +71,14 @@ service cloud.firestore {
       allow delete: if isValidId(teacherId);
     }
 
+    match /students/{studentId} {
+      allow read: if true;
+      allow create, update: if isValidId(studentId) && isValidStudent(request.resource.data);
+      allow delete: if isValidId(studentId);
+    }
+
     match /gallery/{imageId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create, update: if isValidId(imageId) && isValidGalleryImage(request.resource.data);
       allow delete: if isValidId(imageId);
     }

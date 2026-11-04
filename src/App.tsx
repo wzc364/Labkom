@@ -579,6 +579,7 @@ export default function App() {
           <ScheduleTableView
             bookings={bookings}
             periods={currentDayPeriods}
+            daySchedules={daySchedules}
             onOpenBookingModal={handleOpenBookingModal}
             onEditBooking={handleEditBooking}
             currentUser={currentUser}
@@ -602,7 +603,7 @@ export default function App() {
         )}
 
         {activeTab === 'facilities' && (
-          <FacilityGallery images={galleryImages} />
+          <FacilityGallery images={galleryImages} currentUser={currentUser} />
         )}
       </main>
 

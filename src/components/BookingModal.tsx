@@ -3,7 +3,7 @@ import { X, AlertCircle, AlertTriangle, CheckCircle, Calendar, Clock, User, Book
 import { Booking, DayOfWeek, Facility, Period, Teacher, UserSession } from '../types/schedule';
 import { checkBookingConflict } from '../utils/storage';
 import { DAYS_OF_WEEK, SAMPLE_CLASSES, SAMPLE_SUBJECTS } from '../data/defaultData';
-import { getJpTimeRangeLabel, getIndonesianDayFromDateString } from '../utils/timeUtils';
+import { getJpTimeRangeLabel, getIndonesianDayFromDateString, getJpNumber } from '../utils/timeUtils';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -415,8 +415,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <p className="font-semibold text-slate-800">Jam yang tersedia untuk fasilitas {facility}:</p>
             <p className="mt-0.5">
               {availablePeriods
-                .filter(p => !existingBookings.some(b => b.facility === facility && b.day === day && b.bookingDate === bookingDate && p.id >= b.startJp && p.id <= b.endJp))
-                .map(p => p.label)
+                .filter((p, idx) => {
+                  const jpNum = getJpNumber(p, idx);
+                  return !existingBookings.some((b) => {
+                    if (b.facility !== facility || b.day !== day) return false;
+                    const dateA = bookingDate || '';
+                    const dateB = b.bookingDate || '';
+                    if (dateA && dateB && dateA !== dateB) return false;
+                    return jpNum >= b.startJp && jpNum <= b.endJp;
+                  });
+                })
+                .map((p) => p.label)
                 .join(', ') || 'Tidak ada jam tersedia.'}
             </p>
           </div>
@@ -471,11 +480,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 onChange={(e) => handleStartJpChange(Number(e.target.value))}
                 className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono"
               >
-                {availablePeriods.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.label} ({p.startTime}-{p.endTime})
-                  </option>
-                ))}
+                {availablePeriods.map((p, idx) => {
+                  const jpNum = getJpNumber(p, idx);
+                  return (
+                    <option key={p.id + '-' + jpNum} value={jpNum}>
+                      {p.label} ({p.startTime}-{p.endTime})
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -490,12 +502,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono"
               >
                 {availablePeriods
-                  .filter((p) => p.id >= startJp)
-                  .map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label} ({p.startTime}-{p.endTime})
-                    </option>
-                  ))}
+                  .filter((p, idx) => getJpNumber(p, idx) >= startJp)
+                  .map((p, idx) => {
+                    const jpNum = getJpNumber(p, idx);
+                    return (
+                      <option key={p.id + '-' + jpNum} value={jpNum}>
+                        {p.label} ({p.startTime}-{p.endTime})
+                      </option>
+                    );
+                  })}
               </select>
             </div>
           </div>
