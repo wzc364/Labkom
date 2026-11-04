@@ -17,7 +17,7 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { TvDisplayView } from './components/TvDisplayView';
 import { LoginPage } from './components/LoginPage';
 import { ProfileModal } from './components/ProfileModal';
-import { Booking, DayOfWeek, Facility, Period, DayScheduleConfig, Teacher, UserSession, GalleryImage } from './types/schedule';
+import { Booking, DayOfWeek, Facility, Period, DayScheduleConfig, Teacher, UserSession, GalleryImage, Student } from './types/schedule';
 import { loadBookings, saveBookings, loadPeriods, savePeriods, resetToDefaultData } from './utils/storage';
 import { getIndonesianDay, formatTimeDigits } from './utils/timeUtils';
 import { DEFAULT_DAY_SCHEDULES, DEFAULT_TEACHERS } from './data/defaultData';
@@ -28,11 +28,14 @@ import {
   subscribeDaySchedules,
   subscribeTeachers,
   subscribeHeaderLogo,
+  subscribeStudents,
   saveDayScheduleToFirestore,
   saveBookingToFirestore,
   deleteBookingFromFirestore,
   saveTeacherToFirestore,
   deleteTeacherFromFirestore,
+  saveStudentToFirestore,
+  deleteStudentFromFirestore,
   saveHeaderLogoToFirestore,
   seedInitialFirestoreData,
   clearAllFirestoreBookings,
@@ -73,6 +76,7 @@ export default function App() {
   const [periods, setPeriods] = useState<Period[]>(() => loadPeriods());
   const [daySchedules, setDaySchedules] = useState<Record<DayOfWeek, DayScheduleConfig>>(() => loadInitialDaySchedules());
   const [teachers, setTeachers] = useState<Teacher[]>(DEFAULT_TEACHERS);
+  const [students, setStudents] = useState<Student[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(true);
 
@@ -148,6 +152,7 @@ export default function App() {
     let unsubscribePeriods: (() => void) | undefined;
     let unsubscribeDaySchedules: (() => void) | undefined;
     let unsubscribeTeachersRef: (() => void) | undefined;
+    let unsubscribeStudentsRef: (() => void) | undefined;
     let unsubscribeLogoRef: (() => void) | undefined;
     let unsubscribeGalleryRef: (() => void) | undefined;
 
@@ -325,6 +330,14 @@ export default function App() {
     const updated = teachers.filter((t) => t.id !== teacherId);
     setTeachers(updated);
     await deleteTeacherFromFirestore(teacherId);
+  };
+
+  const handleSaveStudent = async (student: Student) => {
+    await saveStudentToFirestore(student);
+  };
+
+  const handleDeleteStudent = async (studentId: string) => {
+    await deleteStudentFromFirestore(studentId);
   };
 
   // Header Logo Save Handler
@@ -555,6 +568,9 @@ export default function App() {
             headerLogo={headerLogo}
             onSaveHeaderLogo={handleSaveHeaderLogo}
             galleryImages={galleryImages}
+            students={students}
+            onSaveStudent={handleSaveStudent}
+            onDeleteStudent={handleDeleteStudent}
           />
         )}
 

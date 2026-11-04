@@ -65,3 +65,9 @@ export interface GalleryImage {
 }
 
 
+export interface Student {
+  id: string;
+  name: string;
+  nisn: string;
+  createdAt?: string;
+}

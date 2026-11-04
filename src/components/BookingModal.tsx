@@ -409,6 +409,56 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               </select>
             </div>
           </div>
+          
+          {/* Free Periods Info */}
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-[10px] text-slate-600">
+            <p className="font-semibold text-slate-800">Jam yang tersedia untuk fasilitas {facility}:</p>
+            <p className="mt-0.5">
+              {availablePeriods
+                .filter(p => !existingBookings.some(b => b.facility === facility && b.day === day && b.bookingDate === bookingDate && p.id >= b.startJp && p.id <= b.endJp))
+                .map(p => p.label)
+                .join(', ') || 'Tidak ada jam tersedia.'}
+            </p>
+          </div>
+
+          {/* ALERT BOXES */}
+          {hasBlockingConflict && (
+            <div className="bg-red-50 border border-red-300 rounded-lg p-2.5 text-[11px] text-red-900 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-red-800 text-xs">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>Bentrok Jadwal!</span>
+              </div>
+              <p className="leading-snug">{conflictResult.message}</p>
+            </div>
+          )}
+
+          {!hasBlockingConflict && hasCoLocationNotice && (
+            <div className="bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-[11px] text-amber-950 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Pemberitahuan Ruang Bersama:</span>
+              </div>
+              <p className="leading-snug">{conflictResult.message}</p>
+              <label className="flex items-start gap-1.5 pt-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sharedLabAcknowledged}
+                  onChange={(e) => setSharedLabAcknowledged(e.target.checked)}
+                  className="rounded text-amber-600 focus:ring-amber-500 mt-0.5"
+                />
+                <span className="font-semibold text-amber-900">
+                  Saya memahami dan siap berkoordinasi.
+                </span>
+              </label>
+            </div>
+          )}
+
+          {!hasBlockingConflict && !hasCoLocationNotice && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-[11px] text-emerald-900 flex items-center gap-1.5">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>Jadwal tersedia tanpa bentrok.</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div className="space-y-1">
@@ -471,45 +521,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
-
-          {/* ALERT BOXES */}
-          {hasBlockingConflict && (
-            <div className="bg-red-50 border border-red-300 rounded-lg p-2.5 text-[11px] text-red-900 space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-red-800 text-xs">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>Bentrok Jadwal!</span>
-              </div>
-              <p className="leading-snug">{conflictResult.message}</p>
-            </div>
-          )}
-
-          {!hasBlockingConflict && hasCoLocationNotice && (
-            <div className="bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-[11px] text-amber-950 space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>Pemberitahuan Ruang Bersama:</span>
-              </div>
-              <p className="leading-snug">{conflictResult.message}</p>
-              <label className="flex items-start gap-1.5 pt-1 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={sharedLabAcknowledged}
-                  onChange={(e) => setSharedLabAcknowledged(e.target.checked)}
-                  className="rounded text-amber-600 focus:ring-amber-500 mt-0.5"
-                />
-                <span className="font-semibold text-amber-900">
-                  Saya memahami dan siap berkoordinasi.
-                </span>
-              </label>
-            </div>
-          )}
-
-          {!hasBlockingConflict && !hasCoLocationNotice && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-[11px] text-emerald-900 flex items-center gap-1.5">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>Jadwal tersedia tanpa bentrok.</span>
-            </div>
-          )}
 
           {/* Modal Actions Footer */}
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 shrink-0">

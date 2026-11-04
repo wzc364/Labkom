@@ -19,11 +19,12 @@ import {
   Users,
   Image,
 } from 'lucide-react';
-import { Booking, DayOfWeek, Period, DayScheduleConfig, Teacher } from '../types/schedule';
+import { Booking, DayOfWeek, Period, DayScheduleConfig, Teacher, Student } from '../types/schedule';
 import { DAYS_OF_WEEK, DEFAULT_DAY_SCHEDULES } from '../data/defaultData';
 import { timeToMinutes, minutesToTime } from '../utils/timeUtils';
 import { PrintScheduleModal } from './PrintScheduleModal';
 import { TeacherManagement } from './TeacherManagement';
+import { StudentManagement } from './StudentManagement';
 import { GalleryManager } from './GalleryManager';
 import { HeaderLogoSettings, HeaderLogoConfig, DEFAULT_LOGO_CONFIG } from './HeaderLogoSettings';
 import { GalleryImage } from '../types/schedule';
@@ -42,6 +43,9 @@ interface AdminPanelProps {
   headerLogo?: HeaderLogoConfig | null;
   onSaveHeaderLogo?: (config: HeaderLogoConfig) => Promise<void>;
   galleryImages?: GalleryImage[];
+  students: Student[];
+  onSaveStudent: (student: Student) => Promise<void>;
+  onDeleteStudent: (studentId: string) => Promise<void>;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -58,6 +62,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   headerLogo,
   onSaveHeaderLogo,
   galleryImages = [],
+  students = [],
+  onSaveStudent,
+  onDeleteStudent,
 }) => {
   const [adminSubTab, setAdminSubTab] = useState<'schedules' | 'teachers' | 'logo' | 'gallery'>('schedules');
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>('Senin');
@@ -396,6 +403,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {galleryImages.length}
           </span>
         </button>
+        <button
+          onClick={() => setAdminSubTab('students')}
+          className={`flex-1 min-w-[180px] py-3 px-5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            adminSubTab === 'students'
+              ? 'bg-blue-900 text-amber-300 shadow-md border-2 border-amber-400'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Users className="w-4 h-4 text-amber-400" />
+          <span>Daftar Murid</span>
+        </button>
       </div>
 
       {adminSubTab === 'teachers' ? (
@@ -411,6 +429,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         />
       ) : adminSubTab === 'gallery' ? (
         <GalleryManager images={galleryImages} />
+      ) : adminSubTab === 'students' ? (
+        <StudentManagement students={students} onSaveStudent={onSaveStudent} onDeleteStudent={onDeleteStudent} />
       ) : (
         <>
           {/* Admin Quick Action Cards: Mode TV Display & Cetak Jadwal */}

@@ -8,7 +8,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
-import { Booking, Period, DayOfWeek, DayScheduleConfig, Teacher } from '../types/schedule';
+import { Booking, Period, DayOfWeek, DayScheduleConfig, Teacher, Student } from '../types/schedule';
 import { INITIAL_BOOKINGS, DEFAULT_PERIODS, DEFAULT_DAY_SCHEDULES, DEFAULT_TEACHERS } from '../data/defaultData';
 
 
@@ -314,6 +314,58 @@ export async function deleteTeacherFromFirestore(teacherId: string): Promise<voi
     throw err;
   }
 }
+
+const STUDENTS_COLLECTION = 'students';
+
+// Subscribe to real-time students
+export function subscribeStudents(
+  onData: (students: Student[]) => void,
+  onError?: (err: any) => void
+) {
+  const colRef = collection(db, STUDENTS_COLLECTION);
+  return onSnapshot(
+    colRef,
+    (snapshot) => {
+      const items: Student[] = [];
+      snapshot.forEach((d) => {
+        items.push({ id: d.id, ...d.data() } as Student);
+      });
+      items.sort((a, b) => a.name.localeCompare(b.name));
+      onData(items);
+    },
+    (err) => {
+      handleFirestoreError(err, OperationType.GET, STUDENTS_COLLECTION);
+      if (onError) onError(err);
+    }
+  );
+}
+
+// Save or update student in Firestore
+export async function saveStudentToFirestore(student: Student): Promise<void> {
+  try {
+    const docRef = doc(db, STUDENTS_COLLECTION, student.id);
+    await setDoc(docRef, {
+      name: student.name,
+      nisn: student.nisn,
+      createdAt: student.createdAt || new Date().toISOString(),
+    });
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, `${STUDENTS_COLLECTION}/${student.id}`);
+    throw err;
+  }
+}
+
+// Delete student from Firestore
+export async function deleteStudentFromFirestore(studentId: string): Promise<void> {
+  try {
+    const docRef = doc(db, STUDENTS_COLLECTION, studentId);
+    await deleteDoc(docRef);
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, `${STUDENTS_COLLECTION}/${studentId}`);
+    throw err;
+  }
+}
+
 
 const SETTINGS_COLLECTION = 'settings';
 const HEADER_LOGO_DOC = 'header_logo';

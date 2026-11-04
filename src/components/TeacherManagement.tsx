@@ -11,8 +11,10 @@ import {
   BookOpen,
   IdCard,
   User,
-  Sparkles
+  Sparkles,
+  Upload
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { Teacher } from '../types/schedule';
 import { SAMPLE_SUBJECTS } from '../data/defaultData';
 
@@ -30,6 +32,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Form State
   const [name, setName] = useState('');
@@ -43,6 +46,44 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
   // Delete Confirmation State
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const worksheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[worksheetName];
+      const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+      let successCount = 0;
+      for (const row of jsonData) {
+        // Expected columns: Nama, NIP, Mapel
+        const name = row['Nama'] || row['nama'];
+        const nip = row['NIP'] || row['nip'] || '-';
+        const subject = row['Mapel'] || row['mapel'];
+
+        if (name && subject) {
+          const teacherData: Teacher = {
+            id: `t-${Date.now()}-${Math.random()}`,
+            name: String(name).trim(),
+            nip: String(nip).trim(),
+            subject: String(subject).trim(),
+            createdAt: new Date().toISOString(),
+          };
+          await onSaveTeacher(teacherData);
+          successCount++;
+        }
+      }
+      setNotice({ type: 'success', message: `${successCount} data guru berhasil diunggah.` });
+      setTimeout(() => setNotice(null), 4000);
+    } catch (err) {
+      setNotice({ type: 'error', message: 'Gagal mengunggah file Excel: ' + String(err) });
+      setTimeout(() => setNotice(null), 4000);
+    }
+  };
 
   // Filter teachers based on search term
   const filteredTeachers = teachers.filter((t) => {
@@ -161,15 +202,31 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
             </p>
           </div>
 
-          <button
-            onClick={handleOpenAddModal}
-            className="px-4 py-2.5 bg-blue-900 hover:bg-blue-800 text-amber-300 font-bold rounded-xl text-xs transition-all shadow-sm border border-blue-800 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-          >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Tambah Guru Baru</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept=".xlsx, .xls, .csv"
+              onChange={handleFileUpload}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all shadow-sm border border-emerald-500 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            >
+              <Upload className="w-4 h-4 stroke-[3]" />
+              <span>Unggah Excel</span>
+            </button>
+            <button
+              onClick={handleOpenAddModal}
+              className="px-4 py-2.5 bg-blue-900 hover:bg-blue-800 text-amber-300 font-bold rounded-xl text-xs transition-all shadow-sm border border-blue-800 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Tambah Guru Baru</span>
+            </button>
+          </div>
         </div>
-
+        
         {/* Filter Input */}
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
