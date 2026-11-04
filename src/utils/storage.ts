@@ -102,6 +102,7 @@ export function checkBookingConflict(
   if (exactConflicts.length > 0) {
     const first = exactConflicts[0];
     const timeLabel = getJpTimeRangeLabel(first.startJp, first.endJp, periods);
+    console.log('Conflict detected:', { newBooking, first });
     return {
       hasConflict: true,
       conflictType: 'EXACT_FACILITY',
