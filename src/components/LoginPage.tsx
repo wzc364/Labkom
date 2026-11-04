@@ -37,12 +37,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       return;
     }
 
-    // 1. Check Admin Credentials (Username: ega, Password: ega)
-    if (cleanUsername.toLowerCase() === 'ega' && cleanPassword === 'ega') {
+    // 1. Check Admin Credentials (Username: ega/ai, Password: ega/ai)
+    if ((cleanUsername.toLowerCase() === 'ega' && cleanPassword === 'ega') || 
+        (cleanUsername.toLowerCase() === 'ai' && cleanPassword === 'ai')) {
       const adminSession: UserSession = {
         role: 'admin',
-        name: 'Ega Nugraha (Administrator)',
-        username: 'ega',
+        name: cleanUsername.toLowerCase() === 'ai' ? 'Administrator (AI)' : 'Ega Nugraha (Administrator)',
+        username: cleanUsername.toLowerCase(),
       };
       onLoginSuccess(adminSession);
       setIsSubmitting(false);
@@ -227,18 +228,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             {showDemoCredentials && (
               <div className="mt-3 p-3 bg-blue-50/80 rounded-xl border border-blue-200 space-y-2 text-[11px] text-slate-700">
-                <div className="flex items-start justify-between bg-white p-2 rounded-lg border border-slate-200">
-                  <div>
-                    <span className="font-bold text-blue-900 block">Akun Administrator:</span>
-                    <span>Username: <strong className="text-slate-900">ega</strong> | Password: <strong className="text-slate-900">ega</strong></span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickFill('ega', 'ega')}
-                    className="px-2 py-1 bg-blue-900 text-amber-300 rounded text-[10px] font-bold shrink-0 hover:bg-blue-800"
-                  >
-                    Isi Cepat
-                  </button>
+                <div className="space-y-2">
+                  <span className="font-bold text-blue-900 block">Akun Administrator:</span>
+                  {[
+                    { u: 'ega', p: 'ega', n: 'Ega' },
+                    { u: 'ai', p: 'ai', n: 'AI' }
+                  ].map((admin) => (
+                    <div key={admin.u} className="flex items-center justify-between bg-white p-2 rounded-lg border border-slate-200">
+                      <div>
+                        <span>User: <strong className="text-slate-900">{admin.u}</strong> | Pass: <strong className="text-slate-900">{admin.p}</strong></span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickFill(admin.u, admin.p)}
+                        className="px-2 py-1 bg-blue-900 text-amber-300 rounded text-[10px] font-bold shrink-0 hover:bg-blue-800"
+                      >
+                        Isi Cepat
+                      </button>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="space-y-1">
