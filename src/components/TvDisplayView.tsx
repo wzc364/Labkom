@@ -55,7 +55,7 @@ export const TvDisplayView: React.FC<TvDisplayViewProps> = ({
     : allStatuses.filter((s) => s.facility === selectedFilter);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950 text-white flex flex-col justify-between p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-slate-950 text-white flex flex-col justify-between p-3 sm:p-5 lg:p-6 overflow-hidden h-screen w-screen">
       {/* Top Header Bar for TV */}
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 sm:pb-6 border-b border-slate-800 gap-4">
         <div className="flex items-center gap-3.5">
@@ -148,7 +148,7 @@ export const TvDisplayView: React.FC<TvDisplayViewProps> = ({
       </div>
 
       {/* Main Facility Columns for TV Display */}
-      <div className={`grid gap-6 my-4 flex-1 items-stretch ${
+      <div className={`grid gap-4 sm:gap-6 my-2 sm:my-3 flex-1 items-stretch min-h-0 ${
         displayedStatuses.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'
       }`}>
         {displayedStatuses.map((status) => {
@@ -159,7 +159,7 @@ export const TvDisplayView: React.FC<TvDisplayViewProps> = ({
           return (
             <div
               key={status.facility}
-              className={`rounded-2xl border flex flex-col justify-between p-5 sm:p-8 transition-all ${
+              className={`rounded-2xl border flex flex-col justify-between p-4 sm:p-6 transition-all min-h-0 overflow-y-auto ${
                 isOngoing
                   ? isLab1Pid
                     ? 'bg-gradient-to-b from-blue-950/90 via-slate-900 to-slate-950 border-blue-500 shadow-2xl shadow-blue-900/30 ring-2 ring-blue-500/50'
