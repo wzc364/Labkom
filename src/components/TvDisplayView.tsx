@@ -224,7 +224,7 @@ export const TvDisplayView: React.FC<TvDisplayViewProps> = ({
                         Guru Pengajar:
                       </span>
                       <div className={`font-bold text-amber-300 ${
-                        isSingleView ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'
+                        isSingleView ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'
                       }`}>
                         {status.currentBooking.teacherName}
                       </div>
@@ -246,9 +246,9 @@ export const TvDisplayView: React.FC<TvDisplayViewProps> = ({
 
                     {status.timeRemainingMinutes !== undefined && (
                       <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs sm:text-sm text-slate-300">
+                        <div className="flex items-center justify-between text-xs text-slate-300">
                           <span>Sisa Waktu Penggunaan:</span>
-                          <span className="text-amber-400 font-black font-mono text-sm sm:text-base bg-amber-950/80 border border-amber-800 px-2.5 py-0.5 rounded">
+                          <span className="text-amber-400 font-black font-mono text-xs sm:text-sm bg-amber-950/80 border border-amber-800 px-2 py-0.5 rounded">
                             {status.timeRemainingMinutes} Menit Lagi
                           </span>
                         </div>
