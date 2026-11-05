@@ -159,7 +159,7 @@ export const TvDisplayView: React.FC<TvDisplayViewProps> = ({
           return (
             <div
               key={status.facility}
-              className={`rounded-2xl border flex flex-col justify-between p-4 sm:p-6 transition-all min-h-0 overflow-y-auto ${
+              className={`rounded-2xl border flex flex-col justify-between p-3 sm:p-5 transition-all min-h-0 overflow-hidden ${
                 isOngoing
                   ? isLab1Pid
                     ? 'bg-gradient-to-b from-blue-950/90 via-slate-900 to-slate-950 border-blue-500 shadow-2xl shadow-blue-900/30 ring-2 ring-blue-500/50'
@@ -168,36 +168,36 @@ export const TvDisplayView: React.FC<TvDisplayViewProps> = ({
               }`}
             >
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 sm:pb-6 border-b border-slate-800/80 gap-3 sm:gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 sm:pb-4 border-b border-slate-800/80 gap-2 sm:gap-3">
                 <div>
                   <div className={`font-black text-white tracking-tight ${
-                    isSingleView ? 'text-3xl sm:text-5xl lg:text-6xl' : 'text-2xl sm:text-4xl'
+                    isSingleView ? 'text-xl sm:text-2xl lg:text-3xl' : 'text-lg sm:text-xl'
                   }`}>
                     {status.facility}
                   </div>
-                  <div className="text-xs sm:text-sm text-slate-400 mt-1">
+                  <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5">
                     {isLab1Pid
                       ? 'Gedung Multimedia · 40 PC Siswa + Papan Interaktif (IFP 75")'
                       : 'Gedung Multimedia · 36 PC Siswa'}
                   </div>
                 </div>
 
-                <div className={`px-4 py-2.5 sm:px-6 sm:py-3.5 rounded-xl sm:rounded-2xl font-black uppercase tracking-wider shrink-0 flex items-center gap-2.5 sm:gap-3.5 shadow-2xl transition-all ${
+                <div className={`px-3 py-1.5 rounded-xl font-black uppercase tracking-wider shrink-0 flex items-center gap-2 shadow-xl transition-all ${
                   isOngoing
-                    ? 'bg-amber-400 text-slate-950 border-2 border-amber-300 text-xl sm:text-2xl lg:text-3xl shadow-amber-400/40'
-                    : 'bg-slate-800/90 text-slate-300 border border-slate-700 text-sm sm:text-lg lg:text-xl'
+                    ? 'bg-amber-400 text-slate-950 border-2 border-amber-300 text-xs sm:text-sm shadow-amber-400/30'
+                    : 'bg-slate-800/90 text-slate-300 border border-slate-700 text-xs'
                 }`}>
                   {isOngoing ? (
                     <>
-                      <span className="relative flex h-3.5 w-3.5 sm:h-5 sm:w-5 shrink-0">
+                      <span className="relative flex h-3 w-3 shrink-0">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-80"></span>
-                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 sm:h-5 sm:w-5 bg-red-600"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
                       </span>
                       <span className="tracking-wide">SEDANG DIGUNAKAN</span>
                     </>
                   ) : (
                     <>
-                      <span className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-emerald-400 shrink-0"></span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"></span>
                       <span className="text-slate-200">TERSEDIA / KOSONG</span>
                     </>
                   )}
@@ -205,15 +205,15 @@ export const TvDisplayView: React.FC<TvDisplayViewProps> = ({
               </div>
 
               {/* Huge Body: Current Booking */}
-              <div className="py-6 flex-1 flex flex-col justify-center space-y-4 sm:space-y-6">
+              <div className="py-2 sm:py-3 flex-1 flex flex-col justify-center space-y-2 sm:space-y-3">
                 {isOngoing && status.currentBooking ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
                       <span className="text-xs uppercase tracking-widest text-slate-400 font-bold block mb-1">
                         Kelas yang Menggunakan:
                       </span>
                       <div className={`font-black text-white tracking-tight drop-shadow-md ${
-                        isSingleView ? 'text-6xl sm:text-8xl' : 'text-5xl sm:text-7xl'
+                        isSingleView ? 'text-4xl sm:text-6xl' : 'text-3xl sm:text-5xl'
                       }`}>
                         {status.currentBooking.className}
                       </div>
