@@ -2,7 +2,18 @@ import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Filter, Search, Printer, Plus, ChevronLeft, ChevronRight, LayoutGrid, Layers, CalendarDays } from 'lucide-react';
 import { Booking, DayOfWeek, Facility, Period, UserSession, DayScheduleConfig } from '../types/schedule';
 import { DAYS_OF_WEEK, FACILITIES } from '../data/defaultData';
-import { getJpTimeRangeLabel, isJpOverlap, formatDateToIndonesianShort, INDONESIAN_MONTHS, getIndonesianDay, getJpNumber } from '../utils/timeUtils';
+import {
+  getJpTimeRangeLabel,
+  isJpOverlap,
+  formatDateToIndonesianShort,
+  INDONESIAN_MONTHS,
+  getIndonesianDay,
+  getJpNumber,
+  getBookingTimeRangeLabel,
+  getBookingStartEndMinutes,
+  isTimeOverlap,
+  timeToMinutes
+} from '../utils/timeUtils';
 
 interface ScheduleTableViewProps {
   bookings: Booking[];
@@ -375,10 +386,20 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                                 ? 'bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700'
                                 : 'bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700'
                             }`}
-                            title={`Kelas ${b.className} · ${b.teacherName} (${b.subject}) - ${b.facility}`}
+                            title={`Kelas ${b.className} · ${b.teacherName} (${b.subject}) - ${
+                              b.timeType === 'custom' || b.customStartTime
+                                ? `Pukul ${b.customStartTime}-${b.customEndTime}`
+                                : `JP ${b.startJp}-${b.endJp}`
+                            } - ${b.facility}`}
                           >
-                            <span>{b.className}</span>
-                            <span className="hidden sm:inline">: {b.teacherName}</span>
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="truncate">{b.className}</span>
+                              <span className="text-[8px] font-mono opacity-90 shrink-0">
+                                {b.timeType === 'custom' || b.customStartTime
+                                  ? `${b.customStartTime}`
+                                  : `JP ${b.startJp}`}
+                              </span>
+                            </div>
                           </button>
                         );
                       })
@@ -445,6 +466,10 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                             <div className="text-[10px] text-slate-400 font-normal">{p.startTime}-{p.endTime}</div>
                           </th>
                         ))}
+                        <th className="py-2.5 px-2 text-center border-r border-slate-200 font-mono bg-amber-50/80 text-amber-950 min-w-[125px]">
+                          <div>Di Luar Jam</div>
+                          <div className="text-[10px] text-amber-700 font-normal">Pukul / Waktu</div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
@@ -455,15 +480,24 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                           </td>
                           {teachingPeriods.map((p, pIdx) => {
                             const targetJp = getJpNumber(p, pIdx);
+                            const pStartMin = timeToMinutes(p.startTime);
+                            const pEndMin = timeToMinutes(p.endTime);
+
                             const cellBookings = filteredBookings.filter(
                               (b) => {
                                 if (b.facility !== fac.id) return false;
-                                if (!isJpOverlap(targetJp, targetJp, b.startJp, b.endJp)) return false;
-
                                 if (b.bookingDate) {
-                                  return b.bookingDate.startsWith(currentMonthStr) && b.day === d;
+                                  if (!b.bookingDate.startsWith(currentMonthStr) || b.day !== d) return false;
+                                } else if (b.day !== d) {
+                                  return false;
                                 }
-                                return b.day === d;
+
+                                if (b.timeType === 'custom' || b.customStartTime) {
+                                  const bMin = getBookingStartEndMinutes(b, teachingPeriods);
+                                  return isTimeOverlap(pStartMin, pEndMin, bMin.startMin, bMin.endMin);
+                                }
+
+                                return isJpOverlap(targetJp, targetJp, b.startJp, b.endJp);
                               }
                             );
 
@@ -496,6 +530,11 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                                           <div className="font-semibold text-[10px] truncate leading-tight mt-0.5" title={booking.teacherName}>
                                             {booking.teacherName}
                                           </div>
+                                          {booking.timeType === 'custom' && (
+                                            <div className="text-[9px] font-mono font-bold text-amber-800">
+                                              {booking.customStartTime}-{booking.customEndTime}
+                                            </div>
+                                          )}
                                         </div>
                                       </button>
                                     ))}
@@ -514,6 +553,54 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                               </td>
                             );
                           })}
+
+                          {/* Extra Column: Di Luar Jam (Pukul / Waktu) */}
+                          {(() => {
+                            const customBookings = filteredBookings.filter((b) => {
+                              if (b.facility !== fac.id) return false;
+                              if (b.timeType !== 'custom' && !b.customStartTime) return false;
+                              if (b.bookingDate) {
+                                return b.bookingDate.startsWith(currentMonthStr) && b.day === d;
+                              }
+                              return b.day === d;
+                            });
+
+                            return (
+                              <td className="py-2 px-1 border-r border-slate-200 align-top text-center h-20 min-w-[125px] bg-amber-50/30">
+                                {customBookings.length > 0 ? (
+                                  <div className="space-y-1">
+                                    {customBookings.map((booking) => (
+                                      <button
+                                        key={booking.id}
+                                        onClick={() => handleBookingClick(booking)}
+                                        className="w-full p-1.5 rounded text-left transition-all shadow-2xs flex flex-col justify-between cursor-pointer bg-amber-100 text-amber-950 hover:bg-amber-200 border border-amber-300"
+                                      >
+                                        <div className="font-extrabold text-[11px] leading-tight flex items-center justify-between">
+                                          <span>{booking.className}</span>
+                                          <span className="text-[9px] font-mono font-bold text-amber-900">
+                                            {booking.customStartTime}-{booking.customEndTime}
+                                          </span>
+                                        </div>
+                                        <div className="font-semibold text-[10px] truncate leading-tight mt-0.5" title={booking.teacherName}>
+                                          {booking.teacherName}
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => onOpenBookingModal(fac.id, d)}
+                                    className="w-full h-full rounded-lg border border-dashed border-amber-200 hover:border-amber-400 hover:bg-amber-50 text-amber-600/70 hover:text-amber-900 flex items-center justify-center transition-all group cursor-pointer"
+                                    title={`Klik untuk memesan jam khusus / di luar jam di hari ${d}`}
+                                  >
+                                    <span className="text-[10px] font-bold opacity-60 group-hover:opacity-100">
+                                      + Pukul
+                                    </span>
+                                  </button>
+                                )}
+                              </td>
+                            );
+                          })()}
                         </tr>
                       ))}
                     </tbody>
@@ -530,7 +617,7 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredBookings.map((b) => {
             const isLab1Pid = b.facility === 'LABKOM 1 PID';
-            const timeLabel = getJpTimeRangeLabel(b.startJp, b.endJp, periods);
+            const timeLabel = getBookingTimeRangeLabel(b, periods);
 
             return (
               <div
@@ -570,7 +657,7 @@ export const ScheduleTableView: React.FC<ScheduleTableViewProps> = ({
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-mono text-slate-600">
-                  <span>{timeLabel}</span>
+                  <span className="font-semibold text-blue-950">{timeLabel}</span>
                   <span className="text-blue-600 font-sans font-semibold text-[11px]">
                     Ubah / Hapus &rarr;
                   </span>

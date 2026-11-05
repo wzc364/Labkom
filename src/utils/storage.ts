@@ -1,10 +1,11 @@
-import { Booking, ConflictCheckResult, Facility, Period } from '../types/schedule';
+import { Booking, ConflictCheckResult, Facility, Period, Teacher } from '../types/schedule';
 import { INITIAL_BOOKINGS, DEFAULT_PERIODS } from '../data/defaultData';
-import { isJpOverlap, getJpTimeRangeLabel } from './timeUtils';
+import { isJpOverlap, getJpTimeRangeLabel, getBookingTimeRangeLabel, getBookingStartEndMinutes, isTimeOverlap } from './timeUtils';
 
 const STORAGE_KEYS = {
   BOOKINGS: 'smpn1kawali_labkom_bookings_v2',
   PERIODS: 'smpn1kawali_labkom_periods_v1',
+  TEACHERS: 'smpn1kawali_labkom_teachers_v1',
   DISMISSED_PREVIEW_NOTICE: 'smpn1kawali_preview_notice_dismissed',
 };
 
@@ -18,16 +19,17 @@ export function normalizeFacility(fac: string): Facility {
 
 function normalizeJpVal(val: any, defaultVal: number): number {
   const n = Number(val);
-  if (isNaN(n) || n <= 0) return defaultVal;
+  if (isNaN(n) || n < 0) return defaultVal;
   if (n === 206) return 6;
   if (n === 103) return 4;
   return n;
 }
 
 export function normalizeBooking(b: any): Booking {
-  const startJp = normalizeJpVal(b.startJp, 1);
-  let endJp = normalizeJpVal(b.endJp, startJp);
-  if (endJp < startJp) {
+  const timeType = b.timeType || (b.customStartTime ? 'custom' : 'jp');
+  const startJp = timeType === 'custom' ? Number(b.startJp || 0) : normalizeJpVal(b.startJp, 1);
+  let endJp = timeType === 'custom' ? Number(b.endJp || 0) : normalizeJpVal(b.endJp, startJp);
+  if (timeType !== 'custom' && endJp < startJp) {
     endJp = startJp;
   }
   return {
@@ -36,6 +38,9 @@ export function normalizeBooking(b: any): Booking {
     bookingDate: b.bookingDate || new Date().toISOString().slice(0, 10),
     startJp,
     endJp,
+    timeType,
+    customStartTime: b.customStartTime || (timeType === 'custom' ? '14:30' : undefined),
+    customEndTime: b.customEndTime || (timeType === 'custom' ? '16:30' : undefined),
   };
 }
 
@@ -89,6 +94,28 @@ export function savePeriods(periods: Period[]): void {
   }
 }
 
+export function loadTeachers(): Teacher[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.TEACHERS);
+    if (!raw) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error('Failed to load teachers from localStorage:', e);
+    return [];
+  }
+}
+
+export function saveTeachers(teachers: Teacher[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.TEACHERS, JSON.stringify(teachers));
+  } catch (e) {
+    console.error('Failed to save teachers to localStorage:', e);
+  }
+}
+
 export function checkBookingConflict(
   newBooking: Omit<Booking, 'id' | 'createdAt'>,
   existingBookings: Booking[],
@@ -96,8 +123,6 @@ export function checkBookingConflict(
   excludeBookingId?: string
 ): ConflictCheckResult {
   const facility = normalizeFacility(newBooking.facility);
-  const startJp = normalizeJpVal(newBooking.startJp, 1);
-  const endJp = Math.max(startJp, normalizeJpVal(newBooking.endJp, startJp));
   const bookingDate = newBooking.bookingDate;
 
   // Filter out the booking itself if editing
@@ -105,7 +130,9 @@ export function checkBookingConflict(
     .filter((b) => !excludeBookingId || b.id !== excludeBookingId)
     .map(normalizeBooking);
 
-  // Exact facility collision on the same specific date
+  const newMinutes = getBookingStartEndMinutes(newBooking, periods);
+
+  // Collision check on same facility and same date
   const exactConflicts = otherBookings.filter((b) => {
     if (b.facility !== facility) return false;
 
@@ -113,12 +140,21 @@ export function checkBookingConflict(
     const dateB = b.bookingDate || '';
     if (!dateA || !dateB || dateA !== dateB) return false;
 
+    // If either booking uses custom time
+    if (newBooking.timeType === 'custom' || b.timeType === 'custom' || newBooking.customStartTime || b.customStartTime) {
+      const bMinutes = getBookingStartEndMinutes(b, periods);
+      return isTimeOverlap(newMinutes.startMin, newMinutes.endMin, bMinutes.startMin, bMinutes.endMin);
+    }
+
+    // Both are JP bookings
+    const startJp = normalizeJpVal(newBooking.startJp, 1);
+    const endJp = Math.max(startJp, normalizeJpVal(newBooking.endJp, startJp));
     return isJpOverlap(startJp, endJp, b.startJp, b.endJp);
   });
 
   if (exactConflicts.length > 0) {
     const first = exactConflicts[0];
-    const timeLabel = getJpTimeRangeLabel(first.startJp, first.endJp, periods);
+    const timeLabel = getBookingTimeRangeLabel(first, periods);
     return {
       hasConflict: true,
       conflictType: 'EXACT_FACILITY',

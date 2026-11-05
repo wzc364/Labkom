@@ -30,6 +30,9 @@ export interface Booking {
   notes?: string;
   createdAt: string;
   sharedLabAcknowledgment?: boolean;
+  timeType?: 'jp' | 'custom'; // 'jp' = Jam Pelajaran reguler, 'custom' = Jam Pukul / Waktu (di luar jam)
+  customStartTime?: string; // e.g. "14:30"
+  customEndTime?: string; // e.g. "16:30"
 }
 
 export interface ConflictCheckResult {

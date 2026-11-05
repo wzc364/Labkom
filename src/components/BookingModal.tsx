@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle, AlertTriangle, CheckCircle, Calendar, Clock, User, BookOpen, Layers, Info } from 'lucide-react';
+import { X, AlertCircle, AlertTriangle, CheckCircle, Calendar, Clock, User, BookOpen, Layers, Info, Sparkles } from 'lucide-react';
 import { Booking, DayOfWeek, Facility, Period, Teacher, UserSession } from '../types/schedule';
 import { checkBookingConflict } from '../utils/storage';
 import { DAYS_OF_WEEK, SAMPLE_CLASSES, SAMPLE_SUBJECTS } from '../data/defaultData';
-import { getJpTimeRangeLabel, getIndonesianDayFromDateString, getJpNumber } from '../utils/timeUtils';
+import { getJpTimeRangeLabel, getIndonesianDayFromDateString, getJpNumber, timeToMinutes, getBookingTimeRangeLabel } from '../utils/timeUtils';
+
+const PRESET_CUSTOM_TIMES = [
+  { label: 'Sore / Ekskul', start: '14:30', end: '16:30' },
+  { label: 'Pagi Pra-KBM', start: '06:30', end: '07:15' },
+  { label: 'Siang Istirahat', start: '11:40', end: '13:00' },
+  { label: 'Pelatihan / Rapat', start: '13:30', end: '15:30' },
+  { label: 'Sore Lanjutan', start: '15:30', end: '17:00' },
+];
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -17,7 +25,6 @@ interface BookingModalProps {
   teachers?: Teacher[];
   currentUser?: UserSession | null;
 }
-
 
 export const BookingModal: React.FC<BookingModalProps> = ({
   isOpen,
@@ -39,6 +46,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [day, setDay] = useState<DayOfWeek>('Senin');
   const [startJp, setStartJp] = useState<number>(1);
   const [endJp, setEndJp] = useState<number>(2);
+  const [timeType, setTimeType] = useState<'jp' | 'custom'>('jp');
+  const [customStartTime, setCustomStartTime] = useState<string>('14:30');
+  const [customEndTime, setCustomEndTime] = useState<string>('16:30');
   const [notes, setNotes] = useState('');
   const [sharedLabAcknowledged, setSharedLabAcknowledged] = useState(false);
 
@@ -81,8 +91,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       setFacility(editingBooking.facility);
       setDay(editingBooking.day);
       setBookingDate(editingBooking.bookingDate || getTodayDateStr());
-      setStartJp(editingBooking.startJp);
-      setEndJp(editingBooking.endJp);
+      setTimeType(editingBooking.timeType || (editingBooking.customStartTime ? 'custom' : 'jp'));
+      setCustomStartTime(editingBooking.customStartTime || '14:30');
+      setCustomEndTime(editingBooking.customEndTime || '16:30');
+      setStartJp(editingBooking.startJp || 1);
+      setEndJp(editingBooking.endJp || 1);
       setNotes(editingBooking.notes || '');
       setSharedLabAcknowledged(!!editingBooking.sharedLabAcknowledgment);
     } else {
@@ -103,6 +116,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       const todayStr = getTodayDateStr();
       setBookingDate(todayStr);
       setDay(getIndonesianDayFromDateString(todayStr));
+      setTimeType('jp');
+      setCustomStartTime('14:30');
+      setCustomEndTime('16:30');
       setStartJp(1);
       setEndJp(2);
       setNotes('');
@@ -144,8 +160,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       facility,
       day,
       bookingDate,
-      startJp,
-      endJp,
+      startJp: timeType === 'custom' ? 0 : startJp,
+      endJp: timeType === 'custom' ? 0 : endJp,
+      timeType,
+      customStartTime: timeType === 'custom' ? customStartTime : undefined,
+      customEndTime: timeType === 'custom' ? customEndTime : undefined,
       notes,
     },
     existingBookings,
@@ -170,6 +189,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       alert('Mohon pilih atau masukkan mata pelajaran.');
       return;
     }
+    if (timeType === 'custom') {
+      if (!customStartTime || !customEndTime) {
+        alert('Mohon isi jam mulai dan jam selesai (pukul).');
+        return;
+      }
+      if (timeToMinutes(customEndTime) <= timeToMinutes(customStartTime)) {
+        alert('Jam selesai harus lebih akhir dari jam mulai (contoh: 14:30 s/d 16:30).');
+        return;
+      }
+    }
     if (hasBlockingConflict) {
       alert('Jadwal bentrok! Silakan pilih jam atau fasilitas lain.');
       return;
@@ -183,8 +212,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         facility,
         day,
         bookingDate,
-        startJp,
-        endJp,
+        startJp: timeType === 'custom' ? 0 : startJp,
+        endJp: timeType === 'custom' ? 0 : endJp,
+        timeType,
+        customStartTime: timeType === 'custom' ? customStartTime : undefined,
+        customEndTime: timeType === 'custom' ? customEndTime : undefined,
         notes: notes.trim(),
         sharedLabAcknowledgment: sharedLabAcknowledged,
       },
@@ -410,24 +442,196 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </div>
           </div>
           
-          {/* Free Periods Info */}
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-[10px] text-slate-600">
-            <p className="font-semibold text-slate-800">Jam yang tersedia untuk fasilitas {facility}:</p>
-            <p className="mt-0.5">
-              {availablePeriods
-                .filter((p, idx) => {
-                  const jpNum = getJpNumber(p, idx);
-                  return !existingBookings.some((b) => {
-                    if (b.facility !== facility || b.day !== day) return false;
-                    const dateA = bookingDate || '';
-                    const dateB = b.bookingDate || '';
-                    if (dateA && dateB && dateA !== dateB) return false;
-                    return jpNum >= b.startJp && jpNum <= b.endJp;
-                  });
-                })
-                .map((p) => p.label)
-                .join(', ') || 'Tidak ada jam tersedia.'}
-            </p>
+          {/* Mode Pemilihan Waktu: Jam Pelajaran (JP) vs Jam Pukul / Waktu (Di Luar Jam) */}
+          <div className="space-y-1.5 pt-1">
+            <div className="flex items-center justify-between">
+              <label className="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+                <Clock className="w-3.5 h-3.5 text-blue-600" />
+                <span>Pilihan Waktu Pemesanan *</span>
+              </label>
+              <span className="text-[10px] text-slate-500 font-medium">
+                {timeType === 'jp' ? 'Sesuai Jam Pelajaran Sekolah' : 'Pukul Waktu / Di Luar Jam Pelajaran'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setTimeType('jp')}
+                className={`py-1.5 px-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  timeType === 'jp'
+                    ? 'bg-blue-900 text-amber-300 shadow-xs border border-blue-800'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                }`}
+              >
+                <span>Jam Pelajaran (JP)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeType('custom')}
+                className={`py-1.5 px-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  timeType === 'custom'
+                    ? 'bg-blue-900 text-amber-300 shadow-xs border border-blue-800'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                }`}
+              >
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>Jam Pukul / Di Luar Jam</span>
+              </button>
+            </div>
+          </div>
+
+          {/* JP MODE SELECTORS */}
+          {timeType === 'jp' ? (
+            <>
+              {/* Free Periods Info */}
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-[10px] text-slate-600">
+                <p className="font-semibold text-slate-800">Jam yang tersedia untuk fasilitas {facility}:</p>
+                <p className="mt-0.5">
+                  {availablePeriods
+                    .filter((p, idx) => {
+                      const jpNum = getJpNumber(p, idx);
+                      return !existingBookings.some((b) => {
+                        if (b.facility !== facility || b.day !== day) return false;
+                        const dateA = bookingDate || '';
+                        const dateB = b.bookingDate || '';
+                        if (dateA && dateB && dateA !== dateB) return false;
+                        if (b.timeType === 'custom') return false;
+                        return jpNum >= b.startJp && jpNum <= b.endJp;
+                      });
+                    })
+                    .map((p) => p.label)
+                    .join(', ') || 'Tidak ada jam tersedia.'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+                    <Clock className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Jam Mulai *</span>
+                  </label>
+                  <select
+                    value={startJp}
+                    onChange={(e) => handleStartJpChange(Number(e.target.value))}
+                    className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono"
+                  >
+                    {availablePeriods.map((p, idx) => {
+                      const jpNum = getJpNumber(p, idx);
+                      return (
+                        <option key={p.id + '-' + jpNum} value={jpNum}>
+                          {p.label} ({p.startTime}-{p.endTime})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+                    <Clock className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Jam Selesai *</span>
+                  </label>
+                  <select
+                    value={endJp}
+                    onChange={(e) => handleEndJpChange(Number(e.target.value))}
+                    className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono"
+                  >
+                    {availablePeriods
+                      .filter((p, idx) => getJpNumber(p, idx) >= startJp)
+                      .map((p, idx) => {
+                        const jpNum = getJpNumber(p, idx);
+                        return (
+                          <option key={p.id + '-' + jpNum} value={jpNum}>
+                            {p.label} ({p.startTime}-{p.endTime})
+                          </option>
+                        );
+                      })}
+                  </select>
+                </div>
+              </div>
+            </>
+          ) : (
+            /* CUSTOM CLOCK TIME (DI LUAR JAM) MODE */
+            <div className="space-y-2.5">
+              <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-2.5 text-[11px] text-amber-950 space-y-2">
+                <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
+                  <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>Pemesanan Memakai Jam Pukul (Di Luar Jam Pelajaran)</span>
+                </div>
+                <p className="text-[10px] text-amber-800 leading-tight">
+                  Gunakan opsi ini untuk memesan di luar jam KBM reguler (seperti ekskul, bimbingan, rapat guru, simulasi digital, atau kegiatan sore/akhir pekan).
+                </p>
+
+                {/* Quick Presets */}
+                <div className="space-y-1 pt-0.5">
+                  <span className="text-[10px] font-bold text-slate-700 block">Pilihan Cepat Waktu:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {PRESET_CUSTOM_TIMES.map((pr) => {
+                      const isSelected = customStartTime === pr.start && customEndTime === pr.end;
+                      return (
+                        <button
+                          key={pr.label}
+                          type="button"
+                          onClick={() => {
+                            setCustomStartTime(pr.start);
+                            setCustomEndTime(pr.end);
+                          }}
+                          className={`px-2 py-1 rounded text-[10px] font-bold transition-all border cursor-pointer ${
+                            isSelected
+                              ? 'bg-blue-900 text-amber-300 border-blue-900 shadow-2xs'
+                              : 'bg-white text-slate-700 border-amber-200 hover:bg-amber-100'
+                          }`}
+                        >
+                          {pr.label} ({pr.start} - {pr.end})
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Custom Time Pickers */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+                    <Clock className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Jam Mulai (Pukul) *</span>
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={customStartTime}
+                    onChange={(e) => setCustomStartTime(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+                    <Clock className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Jam Selesai (Pukul) *</span>
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={customEndTime}
+                    onChange={(e) => setCustomEndTime(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono font-bold"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Time Summary */}
+          <div className="bg-slate-100 px-3 py-1.5 rounded-lg text-[11px] text-slate-600 flex items-center justify-between font-mono">
+            <span>Rentang Waktu:</span>
+            <span className="font-bold text-blue-900">
+              {timeType === 'custom'
+                ? `Pukul ${customStartTime || '--:--'} - ${customEndTime || '--:--'} WIB (Di Luar Jam)`
+                : getJpTimeRangeLabel(startJp, endJp, activeDayPeriods)}
+            </span>
           </div>
 
           {/* ALERT BOXES */}
@@ -468,60 +672,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <span>Jadwal tersedia tanpa bentrok.</span>
             </div>
           )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div className="space-y-1">
-              <label className="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
-                <Clock className="w-3.5 h-3.5 text-blue-600" />
-                <span>Jam Mulai *</span>
-              </label>
-              <select
-                value={startJp}
-                onChange={(e) => handleStartJpChange(Number(e.target.value))}
-                className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono"
-              >
-                {availablePeriods.map((p, idx) => {
-                  const jpNum = getJpNumber(p, idx);
-                  return (
-                    <option key={p.id + '-' + jpNum} value={jpNum}>
-                      {p.label} ({p.startTime}-{p.endTime})
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
-                <Clock className="w-3.5 h-3.5 text-blue-600" />
-                <span>Jam Selesai *</span>
-              </label>
-              <select
-                value={endJp}
-                onChange={(e) => handleEndJpChange(Number(e.target.value))}
-                className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono"
-              >
-                {availablePeriods
-                  .filter((p, idx) => getJpNumber(p, idx) >= startJp)
-                  .map((p, idx) => {
-                    const jpNum = getJpNumber(p, idx);
-                    return (
-                      <option key={p.id + '-' + jpNum} value={jpNum}>
-                        {p.label} ({p.startTime}-{p.endTime})
-                      </option>
-                    );
-                  })}
-              </select>
-            </div>
-          </div>
-
-          {/* Time Summary */}
-          <div className="bg-slate-100 px-3 py-1.5 rounded-lg text-[11px] text-slate-600 flex items-center justify-between font-mono">
-            <span>Rentang Waktu:</span>
-            <span className="font-bold text-blue-900">
-              {getJpTimeRangeLabel(startJp, endJp, activeDayPeriods)}
-            </span>
-          </div>
 
           {/* Notes / Topic */}
           <div className="space-y-1">

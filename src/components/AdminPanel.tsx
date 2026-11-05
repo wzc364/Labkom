@@ -39,7 +39,9 @@ interface AdminPanelProps {
   bookings?: Booking[];
   teachers?: Teacher[];
   onSaveTeacher?: (teacher: Teacher) => Promise<void>;
+  onSaveTeachersBulk?: (teachers: Teacher[]) => Promise<void>;
   onDeleteTeacher?: (teacherId: string) => Promise<void>;
+  onClearAllTeachers?: () => Promise<void>;
   headerLogo?: HeaderLogoConfig | null;
   onSaveHeaderLogo?: (config: HeaderLogoConfig) => Promise<void>;
   galleryImages?: GalleryImage[];
@@ -58,7 +60,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   bookings = [],
   teachers = [],
   onSaveTeacher,
+  onSaveTeachersBulk,
   onDeleteTeacher,
+  onClearAllTeachers,
   headerLogo,
   onSaveHeaderLogo,
   galleryImages = [],
@@ -436,7 +440,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         <TeacherManagement
           teachers={teachers}
           onSaveTeacher={onSaveTeacher || (async () => {})}
+          onSaveTeachersBulk={onSaveTeachersBulk}
           onDeleteTeacher={onDeleteTeacher || (async () => {})}
+          onClearAllTeachers={onClearAllTeachers}
         />
       ) : adminSubTab === 'logo' ? (
         <HeaderLogoSettings

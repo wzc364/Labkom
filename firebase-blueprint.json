@@ -13,6 +13,10 @@
         "day": { "type": "string", "enum": ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] },
         "startJp": { "type": "number" },
         "endJp": { "type": "number" },
+        "bookingDate": { "type": "string" },
+        "timeType": { "type": "string", "enum": ["jp", "custom"] },
+        "customStartTime": { "type": "string" },
+        "customEndTime": { "type": "string" },
         "notes": { "type": "string", "maxLength": 255 },
         "createdAt": { "type": "string" },
         "sharedLabAcknowledgment": { "type": "boolean" }

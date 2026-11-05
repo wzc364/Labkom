@@ -143,6 +143,66 @@ export interface FacilityLiveStatus {
   sharedLabWarning?: string;
 }
 
+export function getBookingTimeRangeLabel(
+  booking: {
+    startJp?: number;
+    endJp?: number;
+    timeType?: 'jp' | 'custom' | string;
+    customStartTime?: string;
+    customEndTime?: string;
+  },
+  periods: Period[]
+): string {
+  if (booking.timeType === 'custom' || (booking.customStartTime && booking.customEndTime)) {
+    return `Pukul ${booking.customStartTime} - ${booking.customEndTime} WIB (Di Luar Jam)`;
+  }
+  const startJp = booking.startJp ?? 1;
+  const endJp = booking.endJp ?? startJp;
+  return getJpTimeRangeLabel(startJp, endJp, periods);
+}
+
+export function getBookingStartEndMinutes(
+  booking: {
+    startJp?: number;
+    endJp?: number;
+    timeType?: 'jp' | 'custom' | string;
+    customStartTime?: string;
+    customEndTime?: string;
+  },
+  periods: Period[]
+): { startMin: number; endMin: number } {
+  if (booking.timeType === 'custom' || (booking.customStartTime && booking.customEndTime)) {
+    const startMin = timeToMinutes(booking.customStartTime || '00:00');
+    let endMin = timeToMinutes(booking.customEndTime || '23:59');
+    if (endMin <= startMin) {
+      endMin = startMin + 40;
+    }
+    return { startMin, endMin };
+  }
+
+  const normStart = booking.startJp === 206 ? 6 : (booking.startJp === 103 ? 4 : (booking.startJp ?? 1));
+  const normEnd = booking.endJp === 206 ? 6 : (booking.endJp === 103 ? 4 : (booking.endJp ?? normStart));
+
+  const startP = getPeriodById(periods, normStart);
+  const endP = getPeriodById(periods, normEnd);
+  if (startP && endP) {
+    return {
+      startMin: timeToMinutes(startP.startTime),
+      endMin: timeToMinutes(endP.endTime),
+    };
+  }
+  return { startMin: 0, endMin: 0 };
+}
+
+export function isTimeOverlap(
+  startMin1: number,
+  endMin1: number,
+  startMin2: number,
+  endMin2: number
+): boolean {
+  return !(endMin1 <= startMin2 || startMin1 >= endMin2);
+}
+
 export function getFacilityLiveStatus(
   facility: Facility,
   day: DayOfWeek,
@@ -178,17 +238,13 @@ export function getFacilityLiveStatus(
   let progressPercent: number | undefined;
 
   for (const booking of dayFacilityBookings) {
-    const startP = getPeriodById(periods, booking.startJp);
-    const endP = getPeriodById(periods, booking.endJp);
-    if (!startP || !endP) continue;
-
-    const startMin = timeToMinutes(startP.startTime);
-    const endMin = timeToMinutes(endP.endTime);
+    const { startMin, endMin } = getBookingStartEndMinutes(booking, periods);
+    if (startMin === 0 && endMin === 0 && booking.timeType !== 'custom') continue;
 
     // Check if active right now
     if (curMin >= startMin && curMin < endMin) {
       currentBooking = booking;
-      const totalDuration = endMin - startMin;
+      const totalDuration = Math.max(1, endMin - startMin);
       const elapsed = curMin - startMin;
       timeRemainingMinutes = endMin - curMin;
       progressPercent = Math.min(100, Math.max(0, Math.round((elapsed / totalDuration) * 100)));
@@ -204,7 +260,7 @@ export function getFacilityLiveStatus(
 
   let nextPeriodLabel: string | undefined;
   if (nextBooking) {
-    nextPeriodLabel = getJpTimeRangeLabel(nextBooking.startJp, nextBooking.endJp, periods);
+    nextPeriodLabel = getBookingTimeRangeLabel(nextBooking, periods);
   }
 
   // Co-location warning is no longer applicable as LABKOM 1 and PID are merged into LABKOM 1 PID

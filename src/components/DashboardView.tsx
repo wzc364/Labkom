@@ -2,7 +2,17 @@ import React from 'react';
 import { Plus, ShieldCheck, Clock, Layers, BookOpen } from 'lucide-react';
 import { Booking, DayOfWeek, Facility, Period, UserSession } from '../types/schedule';
 import { FACILITIES } from '../data/defaultData';
-import { formatIndonesianDate, getFacilityLiveStatus, getJpTimeRangeLabel, getCurrentPeriod, formatDateToIndonesianShort, timeToMinutes, getPeriodById } from '../utils/timeUtils';
+import {
+  formatIndonesianDate,
+  getFacilityLiveStatus,
+  getJpTimeRangeLabel,
+  getCurrentPeriod,
+  formatDateToIndonesianShort,
+  timeToMinutes,
+  getPeriodById,
+  getBookingTimeRangeLabel,
+  getBookingStartEndMinutes,
+} from '../utils/timeUtils';
 
 interface DashboardViewProps {
   currentDate: Date;
@@ -138,15 +148,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
               {myBookings.map((b) => {
                 const isLab1Pid = b.facility === 'LABKOM 1 PID';
-                const timeLabel = getJpTimeRangeLabel(b.startJp, b.endJp, periods);
+                const timeLabel = getBookingTimeRangeLabel(b, periods);
                 
                 // Calculate if booking is ongoing
-                const startP = getPeriodById(periods, b.startJp);
-                const endP = getPeriodById(periods, b.endJp);
+                const { startMin, endMin } = getBookingStartEndMinutes(b, periods);
                 const isOngoing = b.bookingDate === todayStr && 
-                                 startP && endP &&
-                                 currentTimeMin >= timeToMinutes(startP.startTime) &&
-                                 currentTimeMin < timeToMinutes(endP.endTime);
+                                 startMin > 0 &&
+                                 currentTimeMin >= startMin &&
+                                 currentTimeMin < endMin;
 
                 return (
                   <div
@@ -290,7 +299,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               <span className="font-bold text-slate-900">{status.currentBooking.subject}</span>
                             </div>
                             <div className="font-mono text-blue-800 font-bold text-[11px]">
-                              {getJpTimeRangeLabel(status.currentBooking.startJp, status.currentBooking.endJp, periods)}
+                              {getBookingTimeRangeLabel(status.currentBooking, periods)}
                             </div>
                           </div>
                         </div>

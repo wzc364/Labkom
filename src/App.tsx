@@ -18,7 +18,7 @@ import { TvDisplayView } from './components/TvDisplayView';
 import { LoginPage } from './components/LoginPage';
 import { ProfileModal } from './components/ProfileModal';
 import { Booking, DayOfWeek, Facility, Period, DayScheduleConfig, Teacher, UserSession, GalleryImage, Student } from './types/schedule';
-import { loadBookings, saveBookings, loadPeriods, savePeriods, resetToDefaultData } from './utils/storage';
+import { loadBookings, saveBookings, loadPeriods, savePeriods, resetToDefaultData, loadTeachers, saveTeachers } from './utils/storage';
 import { getIndonesianDay, formatTimeDigits } from './utils/timeUtils';
 import { DEFAULT_DAY_SCHEDULES, DEFAULT_TEACHERS } from './data/defaultData';
 import { testConnection } from './firebase';
@@ -33,7 +33,9 @@ import {
   saveBookingToFirestore,
   deleteBookingFromFirestore,
   saveTeacherToFirestore,
+  saveTeachersBulkToFirestore,
   deleteTeacherFromFirestore,
+  clearAllTeachersFromFirestore,
   saveStudentToFirestore,
   deleteStudentFromFirestore,
   saveHeaderLogoToFirestore,
@@ -76,7 +78,7 @@ export default function App() {
   const [bookings, setBookings] = useState<Booking[]>(() => loadBookings());
   const [periods, setPeriods] = useState<Period[]>(() => loadPeriods());
   const [daySchedules, setDaySchedules] = useState<Record<DayOfWeek, DayScheduleConfig>>(() => loadInitialDaySchedules());
-  const [teachers, setTeachers] = useState<Teacher[]>(DEFAULT_TEACHERS);
+  const [teachers, setTeachers] = useState<Teacher[]>(() => loadTeachers());
   const [students, setStudents] = useState<Student[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(true);
@@ -205,12 +207,11 @@ export default function App() {
       // Subscribe to real-time teachers collection
       unsubscribeTeachersRef = subscribeTeachers(
         (remoteTeachers) => {
-          if (remoteTeachers && remoteTeachers.length > 0) {
-            setTeachers(remoteTeachers);
-          }
+          setTeachers(remoteTeachers || []);
+          saveTeachers(remoteTeachers || []);
         },
         (err) => {
-          console.warn('Using local default teachers:', err);
+          console.warn('Using local cached teachers:', err);
         }
       );
 
@@ -313,7 +314,7 @@ export default function App() {
     localStorage.removeItem(STORAGE_KEY_USER_SESSION);
   };
 
-  // Teacher CRUD operations (synced with Firestore)
+  // Teacher CRUD operations (synced with Firestore & localStorage)
   const handleSaveTeacher = async (teacher: Teacher) => {
     const existingIndex = teachers.findIndex((t) => t.id === teacher.id);
     let updated: Teacher[];
@@ -324,13 +325,30 @@ export default function App() {
       updated = [...teachers, teacher];
     }
     setTeachers(updated);
+    saveTeachers(updated);
     await saveTeacherToFirestore(teacher);
+  };
+
+  const handleSaveTeachersBulk = async (newTeachers: Teacher[]) => {
+    const existingIds = new Set(teachers.map((t) => t.id));
+    const toAdd = newTeachers.filter((t) => !existingIds.has(t.id));
+    const updated = [...teachers, ...toAdd];
+    setTeachers(updated);
+    saveTeachers(updated);
+    await saveTeachersBulkToFirestore(newTeachers);
   };
 
   const handleDeleteTeacher = async (teacherId: string) => {
     const updated = teachers.filter((t) => t.id !== teacherId);
     setTeachers(updated);
+    saveTeachers(updated);
     await deleteTeacherFromFirestore(teacherId);
+  };
+
+  const handleClearAllTeachers = async () => {
+    setTeachers([]);
+    saveTeachers([]);
+    await clearAllTeachersFromFirestore();
   };
 
   const handleSaveStudent = async (student: Student) => {
@@ -565,7 +583,9 @@ export default function App() {
             bookings={bookings}
             teachers={teachers}
             onSaveTeacher={handleSaveTeacher}
+            onSaveTeachersBulk={handleSaveTeachersBulk}
             onDeleteTeacher={handleDeleteTeacher}
+            onClearAllTeachers={handleClearAllTeachers}
             headerLogo={headerLogo}
             onSaveHeaderLogo={handleSaveHeaderLogo}
             galleryImages={galleryImages}

@@ -191,11 +191,14 @@ export async function saveBookingToFirestore(booking: Booking): Promise<void> {
       facility: booking.facility,
       day: booking.day,
       bookingDate: booking.bookingDate || '',
-      startJp: Number(booking.startJp),
-      endJp: Number(booking.endJp),
+      startJp: Number(booking.startJp || 0),
+      endJp: Number(booking.endJp || 0),
       notes: booking.notes || '',
       createdAt: booking.createdAt,
       sharedLabAcknowledgment: !!booking.sharedLabAcknowledgment,
+      timeType: booking.timeType || 'jp',
+      customStartTime: booking.customStartTime || '',
+      customEndTime: booking.customEndTime || '',
     });
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `${BOOKINGS_COLLECTION}/${booking.id}`);
@@ -270,10 +273,6 @@ export function subscribeTeachers(
   return onSnapshot(
     colRef,
     (snapshot) => {
-      if (snapshot.empty) {
-        onData(DEFAULT_TEACHERS);
-        return;
-      }
       const items: Teacher[] = [];
       snapshot.forEach((d) => {
         items.push({ id: d.id, ...d.data() } as Teacher);
@@ -304,6 +303,32 @@ export async function saveTeacherToFirestore(teacher: Teacher): Promise<void> {
   }
 }
 
+// Batch save multiple teachers to Firestore (atomic & ultra-fast)
+export async function saveTeachersBulkToFirestore(newTeachers: Teacher[]): Promise<void> {
+  if (newTeachers.length === 0) return;
+  try {
+    // Process in batches of 400 to respect Firestore 500 limit
+    const batchSize = 400;
+    for (let i = 0; i < newTeachers.length; i += batchSize) {
+      const chunk = newTeachers.slice(i, i + batchSize);
+      const batch = writeBatch(db);
+      for (const teacher of chunk) {
+        const docRef = doc(db, TEACHERS_COLLECTION, teacher.id);
+        batch.set(docRef, {
+          name: teacher.name,
+          nip: teacher.nip || '-',
+          subject: teacher.subject,
+          createdAt: teacher.createdAt || new Date().toISOString(),
+        });
+      }
+      await batch.commit();
+    }
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, TEACHERS_COLLECTION);
+    throw err;
+  }
+}
+
 // Delete teacher from Firestore
 export async function deleteTeacherFromFirestore(teacherId: string): Promise<void> {
   try {
@@ -311,6 +336,23 @@ export async function deleteTeacherFromFirestore(teacherId: string): Promise<voi
     await deleteDoc(docRef);
   } catch (err) {
     handleFirestoreError(err, OperationType.DELETE, `${TEACHERS_COLLECTION}/${teacherId}`);
+    throw err;
+  }
+}
+
+// Clear all teachers from Firestore
+export async function clearAllTeachersFromFirestore(): Promise<void> {
+  try {
+    const snapshot = await getDocs(collection(db, TEACHERS_COLLECTION));
+    if (!snapshot.empty) {
+      const batch = writeBatch(db);
+      snapshot.forEach((d) => {
+        batch.delete(doc(db, TEACHERS_COLLECTION, d.id));
+      });
+      await batch.commit();
+    }
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, TEACHERS_COLLECTION);
     throw err;
   }
 }

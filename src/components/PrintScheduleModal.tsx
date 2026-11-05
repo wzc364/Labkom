@@ -71,6 +71,9 @@ export const PrintScheduleModal: React.FC<PrintScheduleModalProps> = ({
 
   // Format time range for a booking based on day schedule
   const getTimeRange = (booking: Booking): string => {
+    if (booking.timeType === 'custom' || booking.customStartTime) {
+      return `${booking.customStartTime || ''} - ${booking.customEndTime || ''}`;
+    }
     const dayConfig = daySchedules[booking.day];
     if (!dayConfig || !dayConfig.periods) return '';
 
@@ -259,7 +262,9 @@ export const PrintScheduleModal: React.FC<PrintScheduleModalProps> = ({
                 </thead>
                 <tbody>
                   {filteredBookings.map((b, idx) => {
-                    const jpText = b.startJp === b.endJp ? `JP ${b.startJp}` : `JP ${b.startJp} - ${b.endJp}`;
+                    const jpText = (b.timeType === 'custom' || b.customStartTime)
+                      ? 'Di Luar Jam'
+                      : (b.startJp === b.endJp ? `JP ${b.startJp}` : `JP ${b.startJp} - ${b.endJp}`);
                     const timeRange = getTimeRange(b);
 
                     return (

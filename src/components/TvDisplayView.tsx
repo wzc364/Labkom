@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Tv, Maximize2, Minimize2, Monitor, Filter } from 'lucide-react';
 import { Booking, DayOfWeek, Facility, Period } from '../types/schedule';
 import { FACILITIES } from '../data/defaultData';
-import { formatIndonesianDate, getFacilityLiveStatus, getJpTimeRangeLabel } from '../utils/timeUtils';
+import { formatIndonesianDate, getFacilityLiveStatus, getJpTimeRangeLabel, getBookingTimeRangeLabel } from '../utils/timeUtils';
 
 interface TvDisplayViewProps {
   currentDate: Date;
@@ -240,7 +240,7 @@ export const TvDisplayView: React.FC<TvDisplayViewProps> = ({
                         </div>
                       )}
                       <div className="text-xs font-mono text-amber-400 font-semibold pt-1">
-                        Rentang Jam: {getJpTimeRangeLabel(status.currentBooking.startJp, status.currentBooking.endJp, periods)}
+                        Rentang Waktu: {getBookingTimeRangeLabel(status.currentBooking, periods)}
                       </div>
                     </div>
 

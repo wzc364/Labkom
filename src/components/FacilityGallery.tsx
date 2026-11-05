@@ -165,7 +165,7 @@ export const FacilityGallery: React.FC<FacilityGalleryProps> = ({ images, curren
           <ul className="list-disc list-inside space-y-0.5 text-slate-700">
             <li><strong>LABKOM 1 PID:</strong> 35 PC Siswa + 2 Server + Papan Interaktif Digital (IFP 75" 4K)</li>
             <li><strong>LABKOM 2:</strong> 20 PC Siswa + 8 Chromebook + 25 Tablet Android</li>
-            <li>Seluruh ruangan ber-AC dan terhubung jaringan Internet LAN Gigabyte & Wi-Fi Nesaka</li>
+            <li>Terhubung jaringan Internet LAN Gigabyte & Wi-Fi Nesaka</li>
           </ul>
         </div>
       </div>

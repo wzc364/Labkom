@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, Trash2, Edit2, Plus, Download, Upload, RotateCcw, AlertCircle, FileText, Check, Lock } from 'lucide-react';
 import { Booking, DayOfWeek, Facility, Period, UserSession } from '../types/schedule';
 import { DAYS_OF_WEEK } from '../data/defaultData';
-import { getJpTimeRangeLabel, formatDateToIndonesianShort } from '../utils/timeUtils';
+import { getJpTimeRangeLabel, formatDateToIndonesianShort, getBookingTimeRangeLabel } from '../utils/timeUtils';
 import { exportDataAsJson, importDataFromJson, resetToDefaultData } from '../utils/storage';
 
 interface BookingManagementProps {
@@ -212,7 +212,7 @@ export const BookingManagement: React.FC<BookingManagementProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {filtered.map((b) => {
                   const isLab1Pid = b.facility === 'LABKOM 1 PID';
-                  const timeLabel = getJpTimeRangeLabel(b.startJp, b.endJp, periods);
+                  const timeLabel = getBookingTimeRangeLabel(b, periods);
 
                   return (
                     <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
