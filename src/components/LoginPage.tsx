@@ -163,14 +163,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           <form onSubmit={handleLogin} className="space-y-4 text-xs">
             {/* Username / NIP */}
             <div className="space-y-1.5">
-              <label className="font-extrabold text-slate-800 flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <User className="w-4 h-4 text-blue-700" />
-                  <span>Username / NIP Guru</span>
-                </span>
-                <span className="text-[10px] text-slate-400 font-normal">
-                  (Admin: <strong>ega</strong> | Guru: <strong>NIP</strong>)
-                </span>
+              <label className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                <User className="w-4 h-4 text-blue-700" />
+                <span>Username / NIP Guru</span>
               </label>
               <div className="relative">
                 <input
@@ -186,14 +181,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label className="font-extrabold text-slate-800 flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <KeyRound className="w-4 h-4 text-blue-700" />
-                  <span>Password</span>
-                </span>
-                <span className="text-[10px] text-slate-400 font-normal">
-                  (Default Guru: <strong>Nesaka</strong>)
-                </span>
+              <label className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                <KeyRound className="w-4 h-4 text-blue-700" />
+                <span>Password</span>
               </label>
               <input
                 type="password"
